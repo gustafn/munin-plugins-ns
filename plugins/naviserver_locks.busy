@@ -1,7 +1,7 @@
 #!/usr/bin/env tclsh
 #
 # Wildcard-script to monitor the number of busy mutex locks of a running naviserver instance. 
-# To monitor, link this plugin such as:
+# To monitor a naviserver instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserver_locks.busy /etc/munin/node.d/naviserver_development_locks.busy
 #
