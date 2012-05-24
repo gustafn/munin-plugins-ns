@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# Wildcard-script to monitor threads of a running naviserver instance. 
+# To monitor: link naviserver_reqmonthreads_<servername> to this file. E.g.
+#
+#    ln /usr/share/munin/node/plugins-contrib/naviserver_reqmonthreads_ /etc/munin/node.d/naviserver_reqmonthreads_development
+#
+# Just for value comparison
+
+# Put this in Config
+# [naviserver_reqmonthreads_development]
+# env.address 137.208.225.155
+# env.port 8000
+# env.url /system/munin?t=
+# env.get_data reqmonthreads
+
+# Extract servername from filename
+
+SERVERNAME=`echo $0 | cut -d _ -f 3`
+
+if [ "$1" = "config" ]; then
+    echo "graph_title $SERVERNAME Connection Threads (Requestmonitor) "
+    echo "graph_args --base 1000 -l 0"
+    echo "graph_category naviserver"
+    echo "graph_info This graph shows the current state of connection threads for Naviserver instance $SERVERNAME as seen by the Requestmonitor"
+    echo "current.label current"
+    echo "current.info Current Number of Connection Threads"
+    echo "current.type DERIVE"    
+    echo "current.min 0"    
+    echo "busy.label busy"
+    echo "busy.info Busy Connection Threads"
+    echo "busy.type DERIVE"
+    echo "busy.min 0"    
+    exit 0
+fi
+
+set f [socket $config(address) $config(port)]
+puts $f "GET $config(url)$service HTTP/1.0\n"
+flush $f
+set content [read $f]
+close $f
+foreach line [split $content \n] {
+   if {$line eq ""} {set output 1; continue}
+   if {[info exists output]} {puts $line}
+}
+

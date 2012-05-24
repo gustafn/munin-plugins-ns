@@ -1,0 +1,84 @@
+#!/usr/bin/env tclsh
+#
+# Plugin to monitor CPU usage, for a selected set of processes. 
+# Tested on Linux.
+#
+# Author: Gustaf Neumann
+#
+# Usage: Place in /usr/local/etc/munin/plugins/ (or link it there  using ln -s)
+#        Add this to your /ur/local/etc/munin/plugin-conf.d/plugins.conf:
+#
+#       [cpu-time-per-process]
+#       env.procs httpd java
+#
+#    httpd and java being a list of the processes to monitor.
+#
+# Command line arguments understood:
+#
+#       config   (required)
+#       autoconf (optional - used by munin-config)
+#
+array set config {
+  procs "httpd nsd nginx java"
+}
+
+foreach n [array names config] {
+  if {[info exists ::env($n)]} {
+    set config($n) $::env($n)
+  }
+}
+
+switch $argv {
+  autoconf {
+    puts yes
+  }
+  config {
+    puts "graph_args --base 1000 -r --lower-limit 0"
+    puts "graph_title CPU usage, by process"
+    puts "graph_category system"
+    puts "graph_info This graph shows CPU usage, for monitored processes."
+    puts "graph_vlabel secs"
+    puts "graph_scale no"
+    puts "graph_period second"
+    puts "graph_order $config(procs)"
+    
+    foreach p $config(procs) {
+      puts "${p}.label $p"
+      puts "${p}.info CPU used by process $p"
+      puts "${p}.type DERIVE"
+      if {![info exists later_proc]} {
+	puts "${p}.draw AREA"
+	set later_proc 1
+      } else {
+	puts "${p}.draw STACK"
+      }
+    }
+  }
+  default {
+    set re ([join $config(procs) |])
+    foreach p $config(procs) {
+      set time($p) 0
+    }
+    foreach line [split [exec /bin/ps axo time,comm] \n] {
+      lassign $line cputime comm
+      if {[regexp $re $comm . match]} {
+	#puts line=$line,COMM=[lindex $line 1]--$match--$cputime
+	if {[regexp {^(\d\d?)?-?(\d+):(\d+):(\d\d)$} $cputime . day h m s]} {
+	  #puts "match day '$day' $h m $m s $s"
+	  if {$day ne ""} {
+	    regsub ^0+(.+) $day \\1 day
+	    incr time($match) [expr {$day*24*60*60}]
+	  }
+	  regsub ^0+(.+) $h \\1 h
+	  regsub ^0+(.+) $m \\1 m
+	  regsub ^0+(.+) $s \\1 s
+	  incr time($match) [expr {$h*60*60 + $m*60 + $s}]
+	  #puts secs=time($match)
+	}
+      }
+    }
+    foreach p [array names time] {
+      puts "$p.value $time($p)"
+    }
+  }
+}

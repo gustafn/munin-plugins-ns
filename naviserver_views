@@ -1,0 +1,66 @@
+#!/usr/bin/env tclsh
+#
+# Wildcard-script to monitor the number of views of a running naviserver instance. 
+# To monitor, link this plugin such as:
+#
+#    ln /usr/share/munin/node/plugins-contrib/naviserver_views /etc/munin/node.d/naviserver_development_views
+#
+# To configure this plugin put something like the 
+# following into /etc/munin/plugin-conf.d/naviserver
+#
+# [naviserver_*]
+#    env.url /SYSTEM/munin?t=
+#
+# [naviserver_development_*]
+#    env.address localhost
+#    env.port 8000
+#
+
+lassign [split $argv0 _] . serverName service
+array set config {
+  address localhost
+  port 8000
+  url /SYSTEM/munin?t=
+}
+
+foreach n [array names config] {
+  if {[info exists ::env($n)]} {
+    # puts "override $n with $::env($n)"
+    set config($n) $::env($n)
+  }
+}
+
+if {$argv eq "config" } {
+  puts "graph_title $serverName Views/Requests per Second "
+  puts "graph_args --base 1000 -l 0"
+  puts "graph_category naviserver"
+  puts "graph_info This graph shows the current activity (views) for Naviserver instance $serverName"
+  puts "views_seconds.label views per second"
+  puts "views_seconds.info Views per second"
+  puts "views_seconds.type GAUGE"
+  puts "views_seconds.min 0"
+  puts "views_minutes.label Views per second (min avg)"
+  puts "views_minutes.info Views per second (min avg)"
+  puts "views_minutes.type GAUGE"
+  puts "views_minutes.min 0"
+  puts "alt_views.label Alt views per second"
+  puts "alt_views.info Alt Views per second"
+  puts "alt_views.type DERIVE"
+  puts "alt_views.min 0"
+  puts "spools.label Spools per second"
+  puts "spools.info Spools per second"
+  puts "spools.type DERIVE"
+  puts "spools.min 0"
+  return
+}
+
+set f [socket $config(address) $config(port)]
+puts $f "GET $config(url)$service HTTP/1.0\n"
+flush $f
+set content [read $f]
+close $f
+foreach line [split $content \n] {
+   if {$line eq ""} {set output 1; continue}
+   if {[info exists output]} {puts $line}
+}
+
