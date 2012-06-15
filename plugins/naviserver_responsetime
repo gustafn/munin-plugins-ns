@@ -36,6 +36,7 @@ if {$argv eq "config" } {
   puts "graph_args --base 1000 -l 0"
   puts "graph_category naviserver"
   puts "graph_info This graph shows the current reposonse time for Naviserver instance $serverName"
+  puts "graph_vlabel Seconds"
   puts "response_time.label Response Time"
   puts "response_time.info $serverName Response Time"
   puts "response_time.type GAUGE"

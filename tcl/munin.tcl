@@ -49,8 +49,8 @@ switch [ns_queryget t ""] {
 	}
         set tm [throttle trend response_time_minutes]
         lappend output \
-		"response_time.value [lindex $tm end]" \
-		"response_time_five.value [avg_last_n $tm 5 cnt]" 
+                "response_time.value [expr {[lindex $tm end]/1000.0}]" \
+                "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]"
     }
     "memsize" {
         set sizes [exec /bin/ps -o vsize,rss [pid]]
