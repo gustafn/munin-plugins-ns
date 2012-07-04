@@ -38,6 +38,21 @@ proc mutex_sum {field scale} {
 }
 	
 switch [ns_queryget t ""] {
+
+    "count" {
+       set output ""
+       set vars [ns_queryget vars ""]
+       array set count [throttle do array get ::count]
+       foreach v $vars {
+         if {[info exists count($v)]} {
+            set c $count($v)
+         } else {
+           set c 0
+         }
+         lappend output "[string map {: _} $v].value $c"
+       }
+    }
+
     "responsetime" {
 	proc avg_last_n {list n var} {
 	  upvar $var cnt

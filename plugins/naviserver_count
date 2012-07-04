@@ -1,0 +1,91 @@
+#!/usr/bin/env tclsh
+#
+# Wildcard-script to monitor counter variables from the 
+# xotcl-request-monitor, which can be fed with one-liners
+# to monitor arbitrary data.
+#
+# To monitor, link this plugin such as:
+#
+#    ln /usr/share/munin/node/plugins/naviserver_count /etc/munin/node.d/naviserver_development_count_kerberos
+#    ln /usr/share/munin/node/plugins/naviserver_count /etc/munin/node.d/naviserver_development_count_einsicht
+#
+# where "development" is the name of the server and
+# "kerberos" and "einsicht" are to sample configurations 
+# Every sample configuration selects certain counter 
+# variables, which are listed in the configuration
+# section (see below) for this server and graph.
+# 
+# In order to add values to aolserver/naviserver,
+# install the OpenACS xotcl-request-munitor and
+# insert in your appcode statements like the 
+# following:
+#
+#    ::throttle do incr ::count(kerberos:auth)
+# or
+#    ::throttle do incr ::count(kerberos:error)
+#
+# To configure this plugin put something like the 
+# following into /etc/munin/plugin-conf.d/naviserver
+#
+# [naviserver_*]
+#    env.url /SYSTEM/munin?t=
+#
+# [naviserver_development_*]
+#    env.address localhost
+#    env.port 8000
+#
+# [naviserver_production_count_einsicht]
+#    env.title Einsicht
+#    env.vars einsicht:pdf
+#
+# [naviserver_production_count_kerberos]
+#    env.title Kerberos
+#    env.vars kerberos:auth kerberos:error
+#    env.graph_period minute
+
+lassign [split $argv0 _] . serverName service counterset
+array set config {
+  address localhost
+  port 8000
+  url /SYSTEM/munin?t=
+  vars "einsicht:pdf"
+  graph_period minute
+  title "PDF delivery for einsicht"
+}
+
+foreach n [array names config] {
+  if {[info exists ::env($n)]} {
+    # puts "override $n with $::env($n)"
+    set config($n) $::env($n)
+  }
+}
+
+append service &vars=[string map {" " +} $config(vars)]
+
+if {$argv eq "config" } {
+  puts "graph_title $serverName Count $config(title)"
+  puts "graph_args -l 0"
+  puts "graph_category naviserver"
+  puts "graph_period $config(graph_period)"
+  puts "graph_vlabel count per $config(graph_period)"
+  puts "graph_info This graph shows the counter for Naviserver instance $serverName $config(title)"
+  foreach s $config(vars) {
+     set item [string map {: _} $s]
+     puts "$item.label $s"
+     puts "$item.info Frequency of $s"
+     puts "$item.type DERIVE"
+     puts "$item.min 0"
+  }
+  return
+}
+
+set f [socket $config(address) $config(port)]
+puts $f "GET $config(url)$service HTTP/1.0\n"
+flush $f
+set content [read $f]
+close $f
+foreach line [split $content \n] {
+   if {$line eq ""} {set output 1; continue}
+   if {[info exists output]} {puts $line}
+}
+
