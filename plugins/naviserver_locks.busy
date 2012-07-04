@@ -33,10 +33,11 @@ foreach n [array names config] {
 append service &lockvalues=[string map {" " +} $config(lockvalues)]
 
 if {$argv eq "config" } {
-  puts "graph_title $serverName Mutex - Number of Busy Locks"
+  puts "graph_title $serverName Mutex Busy Locks"
   puts "graph_args --base 1000 -l 0"
   puts "graph_category naviserver"
   puts "graph_info This graph shows the number of Busy Mutex Locks for Naviserver instance $serverName"
+  puts {graph_vlabel busy locks per ${graph_period}}
   puts "total.label total"
   puts "total.info Total number of Busy Mutex Locks"
   puts "total.type DERIVE"

@@ -67,7 +67,7 @@ if {$argv eq "config" } {
   puts "graph_args -l 0"
   puts "graph_category naviserver"
   puts "graph_period $config(graph_period)"
-  puts "graph_vlabel count per $config(graph_period)"
+  puts {graph_vlabel count per ${graph_period}}
   puts "graph_info This graph shows the counter for Naviserver instance $serverName $config(title)"
   foreach s $config(vars) {
      set item [string map {: _} $s]
