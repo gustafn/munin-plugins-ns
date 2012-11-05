@@ -34,12 +34,20 @@ if [ "$1" = "config" ]; then
     exit 0
 fi
 
-set f [socket $config(address) $config(port)]
+if {$config(ssl)} {
+  # the following catch is due to a seemingly incorrect setup for tcl in fedora core
+  if {[catch {package req tls}]} {lappend auto_path /usr/lib/tcl8.5; package req tls}
+  puts stderr "tls::socket $config(address) $config(port)"
+  set f [tls::socket $config(address) $config(port)]
+} else {
+  set f [socket $config(address) $config(port)]
+}
 puts $f "GET $config(url)$service HTTP/1.0\n"
 flush $f
 set content [read $f]
 close $f
 foreach line [split $content \n] {
+   set line [string trim $line]
    if {$line eq ""} {set output 1; continue}
    if {[info exists output]} {puts $line}
 }

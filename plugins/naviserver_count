@@ -33,6 +33,7 @@
 # [naviserver_development_*]
 #    env.address localhost
 #    env.port 8000
+#    env.ssl  false
 #
 # [naviserver_production_count_einsicht]
 #    env.title Einsicht
@@ -47,6 +48,7 @@ lassign [split $argv0 _] . serverName service counterset
 array set config {
   address localhost
   port 8000
+  ssl  false
   url /SYSTEM/munin?t=
   vars "einsicht:pdf"
   graph_period minute
@@ -79,12 +81,19 @@ if {$argv eq "config" } {
   return
 }
 
-set f [socket $config(address) $config(port)]
+if {$config(ssl)} {
+  # The following catch is due to a seemingly incorrect setup for tcl in fedora core.
+  if {[catch {package req tls}]} {lappend auto_path /usr/lib/tcl8.5; package req tls}
+  set f [tls::socket $config(address) $config(port)]
+} else {
+  set f [socket $config(address) $config(port)]
+}
 puts $f "GET $config(url)$service HTTP/1.0\n"
 flush $f
 set content [read $f]
 close $f
 foreach line [split $content \n] {
+   set line [string trim $line]
    if {$line eq ""} {set output 1; continue}
    if {[info exists output]} {puts $line}
 }
