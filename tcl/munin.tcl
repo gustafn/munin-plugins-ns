@@ -36,7 +36,50 @@ proc mutex_sum {field scale} {
     }
     return $output
 }
-	
+
+proc cpuinfo {utime stime ttime} {
+    upvar $utime utimes $stime stimes $ttime ttimes
+    set HZ 100.0 ;# for more reliable handling, we should implememnt jiffies_to_timespec or jiffies_to_secs in C
+    set pid [pid]
+    set threadInfo [ns_info threads]
+    if {[file readable /proc/$pid/statm] && [llength [lindex $threadInfo 0]] > 7} {
+	foreach t $threadInfo {
+	    set fn /proc/$pid/task/[lindex $t 7]/stat
+	    if {[file readable $fn]} {
+		set f [open $fn]; set s [read $f]; close $f
+	    } elseif {[file readable /proc/$pid/task/$pid/stat]} {
+		set f [open /proc/$pid/task/$pid/stat]; set s [read $f]; close $f
+	    } else {
+		set s ""
+	    }
+	    if {$s ne ""} {
+		lassign $s tid comm state ppid pgrp session tty_nr tpgid flags minflt \
+		    cminflt majflt cmajflt utime stime cutime cstime priority nice \
+		    numthreads itrealval starttime vsize rss rsslim startcode endcode \
+		    startstack kstkesp kstkeip signal blocked sigignore sigcatch wchan \
+		    nswap cnswap ext_signal processor ...
+		set name [lindex $t 0]
+		switch -glob -- [lindex $t 0] {
+		    "-main-"    { set group main }
+		    "::*"       { set group tcl:[string range $name 2 end]}
+		    "-sched*"   { set group scheds  }
+		    "-writer*"  { set group writers }
+		    "-conn:*"   { set group conns   }
+		    "-driver:*" { set group drivers }
+		    default     { set group others  }
+		}
+		if {![info exists ttimes($group)]} {
+		    set utimes($group) 0
+		    set stimes($group) 0
+		    set ttimes($group) 0
+		}
+		set ttimes($group) [expr {$ttimes($group) + $utime*10 + $stime*10}]
+		set utimes($group) [expr {$utimes($group) + $utime*10}]
+		set stimes($group) [expr {$stimes($group) + $stime*10}]
+	    }
+	}
+    }
+}
 switch [ns_queryget t ""] {
 
     "count" {
@@ -53,6 +96,26 @@ switch [ns_queryget t ""] {
        }
     }
 
+    "lsof" {
+        array set count {file 0 pipe 0 socket 0 tcp 0 other 0 total 0}
+        foreach l [split [exec /usr/sbin/lsof +p [pid]] \n] {
+            switch -glob [lindex $l 8] {
+		/* {incr count(file)}
+		pipe {incr count(pipe)}
+		socket {incr count(socket)}
+		default {if {[lindex $l 7] eq "TCP"} {incr count(tcp)} else {incr count(other)}}
+            }
+            incr count(total)
+        }
+        lappend output \
+            "file.value   $count(file)" \
+            "pipe.value   $count(pipe)" \
+            "socket.value $count(socket)" \
+            "tcp.value    $count(tcp)" \
+            "other.value  $count(other)" \
+            "total.value  $count(total)" 
+    }
+
     "responsetime" {
 	proc avg_last_n {list n var} {
 	  upvar $var cnt
@@ -67,6 +130,7 @@ switch [ns_queryget t ""] {
                 "response_time.value [expr {[lindex $tm end]/1000.0}]" \
                 "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]"
     }
+
     "memsize" {
         set sizes [exec /bin/ps -o vsize,rss [pid]]
         lappend output \
@@ -88,6 +152,12 @@ switch [ns_queryget t ""] {
             "busy.value [expr {$thread_info(current) - $thread_info(idle) - 1}]" \
             "nrthreads.value [lindex [exec /bin/ps -o nlwp [pid]] 1]" \
             "rspools.value $rspools"
+    }
+    "threadcpu" {
+	cpuinfo ut st tt
+	foreach group [array names tt] {
+	    lappend output "time:$group.value $tt($group)"
+	}
     }
     "reqmonthreads" {
           lappend output \
@@ -118,6 +188,7 @@ switch [ns_queryget t ""] {
            lappend output \
               "views_seconds.value [lindex $ts end]" \
               "views_minutes.value $views_per_sec" \
+              "requests.value [ns_server connections]" \
               "alt_views.value [throttle do set ::threads_datapoints]" \
               "spools.value $spools"
         }
