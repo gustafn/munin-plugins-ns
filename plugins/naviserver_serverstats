@@ -1,0 +1,98 @@
+#!/usr/bin/env tclsh
+#
+# Wildcard-script to monitor the response time of a running naviserver instance. 
+# To monitor a naviserver instance named "development", link this plugin such as:
+#
+#    ln /usr/share/munin/node/plugins-contrib/naviserser_serverstats /etc/munin/node.d/naviserver_development_serverstats
+#
+# To configure this plugin put something like the 
+# following into /etc/munin/plugin-conf.d/naviserver
+#
+# [naviserver_*]
+#    env.url /SYSTEM/munin?t=
+#
+# [naviserver_development_*]
+#    env.address localhost
+#    env.port 8000
+#    env.ssl  false
+#
+
+lassign [split $argv0 _] . serverName service
+array set config {
+  address localhost
+  port 8000
+  ssl  false
+  url /SYSTEM/munin?t=
+}
+
+foreach n [array names config] {
+  if {[info exists ::env($n)]} {
+    #puts "override $n with $::env($n)"
+    set config($n) $::env($n)
+  }
+}
+
+if {$argv eq "config" } {
+  puts "graph_title $serverName Partial Response Times "
+  #puts "graph_args --logarithmic --base 1000 -l 1"
+  #puts "graph_args --base 1000 -l 0"
+  puts "graph_args --base 1000 --logarithmic"
+  puts "graph_category naviserver"
+  puts "graph_info This graph shows the partial reposonse times for Naviserver instance $serverName"
+  puts "graph_vlabel Seconds"
+  puts "accepttime.label Accept Time"
+  puts "accepttime.info $serverName Accept Time"
+  puts "accepttime.type GAUGE"
+  puts "accepttime.colour COLOUR0"
+  puts "queuetime.label Queue Time"
+  puts "queuetime.info $serverName Queue Time"
+  puts "queuetime.type GAUGE"
+  puts "queuetime.colour COLOUR1"
+  puts "filtertime.label Filter Time"
+  puts "filtertime.info $serverName Filter Time"
+  puts "filtertime.type GAUGE"
+  puts "filtertime.colour COLOUR2"
+  puts "runtime.label Run Time"
+  puts "runtime.info $serverName Run Time"
+  puts "runtime.type GAUGE"
+  puts "runtime.colour COLOUR7"
+  puts "totaltime.label Total Response Time"
+  puts "totaltime.info $serverName Total Response Time"
+  puts "totaltime.type GAUGE"
+  puts "totaltime.colour COLOUR3"
+  puts "avgqueuetime.label Avg Queue Time"
+  puts "avgqueuetime.info $serverName Avg Queue Time"
+  puts "avgqueuetime.type GAUGE"
+  puts "avgqueuetime.colour COLOUR11" ;# 5
+  puts "avgfiltertime.label Avg Filter Time"
+  puts "avgfiltertime.info $serverName Avg Filter Time"
+  puts "avgfiltertime.type GAUGE"
+  puts "avgfiltertime.colour COLOUR5" ;# 11
+  puts "avgruntime.label Avg Run Time"
+  puts "avgruntime.info $serverName Avg Run Time"
+  puts "avgruntime.type GAUGE"
+  puts "avgruntime.colour COLOUR4"
+  puts "avgtotaltime.label Avg Total Response Time"
+  puts "avgtotaltime.info $serverName Avg Total Response Time"
+  puts "avgtotaltime.type GAUGE"
+  puts "avgtotaltime.colour COLOUR8"
+  return
+}
+
+if {$config(ssl)} {
+  # The following catch is due to a seemingly incorrect setup for tcl in fedora core.
+  if {[catch {package req tls}]} {lappend auto_path /usr/lib/tcl8.5; package req tls}
+  set f [tls::socket $config(address) $config(port)]
+} else {
+  set f [socket $config(address) $config(port)]
+}
+puts $f "GET $config(url)$service HTTP/1.0\n"
+flush $f
+set content [read $f]
+close $f
+foreach line [split $content \n] {
+   set line [string trim $line]
+   if {$line eq ""} {set output 1; continue}
+   if {[info exists output]} {puts $line}
+}
+

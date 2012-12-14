@@ -81,6 +81,41 @@ proc cpuinfo {utime stime ttime} {
     }
 }
 switch [ns_queryget t ""] {
+    "serverstats" {
+        set stats [ns_server stats]
+        array set serverstats $stats
+        set treqs $serverstats(requests)
+        set tavgAcceptTime [expr {($serverstats(accepttime) * 1.0 / $treqs)}]
+        set tavgQueueTime  [expr {($serverstats(queuetime)  * 1.0 / $treqs)}]
+        set tavgFilterTime [expr {($serverstats(filtertime) * 1.0 / $treqs)}]
+        set tavgRunTime    [expr {($serverstats(runtime)    * 1.0 / $treqs)}]
+        if {[throttle do info exists lastserverstats]} {
+           array set lastserverstats [throttle do set lastserverstats]
+           set reqs [expr {$serverstats(requests) - $lastserverstats(requests)}]
+           set avgAcceptTime [expr {(($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs)}]
+           set avgQueueTime  [expr {(($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs)}]
+           set avgFilterTime [expr {(($serverstats(filtertime) - $lastserverstats(filtertime))  * 1.0 / $reqs)}]
+           set avgRunTime    [expr {(($serverstats(runtime)    - $lastserverstats(runtime))    * 1.0 / $reqs)}]
+        } else {
+           set avgAcceptTime $tavgAcceptTime
+           set avgQueueTime  $tavgQueueTime
+           set avgFilterTime $tavgQueueTime
+           set avgRunTime    $tavgRunTime
+        }
+        set ttotalTime [expr {$tavgQueueTime + $tavgFilterTime + $tavgRunTime}]
+        set totalTime  [expr {$avgQueueTime + $avgFilterTime + $avgRunTime}]
+        throttle do set lastserverstats $stats
+        lappend output \
+            "accepttime.value [format %6.4f $avgAcceptTime]" \
+            "queuetime.value  [format %6.4f $avgQueueTime]" \
+            "filtertime.value [format %6.4f $avgFilterTime]" \
+            "runtime.value    [format %6.4f $avgRunTime]" \
+            "totaltime.value  [format %6.4f $totalTime]" \
+            "avgqueuetime.value  [format %6.4f $tavgQueueTime]" \
+            "avgfiltertime.value [format %6.4f $tavgFilterTime]" \
+            "avgruntime.value    [format %6.4f $tavgRunTime]" \
+            "avgtotaltime.value  [format %6.4f $ttotalTime]"
+    }
 
     "count" {
        set output ""
