@@ -23,7 +23,7 @@ array set config {
   port 8000
   ssl  false
   url /SYSTEM/munin?t=
-  values "time:conns time:drivers time:main time:others time:scheds time:tcl:bgdelivery time:tcl:throttle time:writers time:asynclogwriters"
+  values "time:conns time:drivers time:main time:others time:scheds time:tcl:bgdelivery time:tcl:throttle time:writers time:logwriter"
 }
 
 foreach n [array names config] {
