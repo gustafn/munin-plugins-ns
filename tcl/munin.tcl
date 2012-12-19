@@ -63,9 +63,10 @@ proc cpuinfo {utime stime ttime} {
 		    "-main-"    { set group main }
 		    "::*"       { set group tcl:[string range $name 2 end]}
 		    "-sched*"   { set group scheds  }
-		    "-writer*"  { set group writers }
 		    "-conn:*"   { set group conns   }
 		    "-driver:*" { set group drivers }
+		    "-asynclogwriter*" { set group logwriter }
+		    "-writer*"  { set group writers }
 		    default     { set group others  }
 		}
 		if {![info exists ttimes($group)]} {
