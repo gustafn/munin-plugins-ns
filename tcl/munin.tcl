@@ -190,7 +190,7 @@ switch [ns_queryget t ""] {
             "rspools.value $rspools"
     }
     "threadcpu" {
-        if {[info command ::xo::system]} {
+        if {[info command ::xo::system] ne ""} {
 	   xo::system aggcpuinfo ut st tt
         } else {
            # TODO: cpuinfo is obsolete and should be removed in the future
