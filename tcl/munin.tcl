@@ -181,13 +181,13 @@ switch [ns_queryget t ""] {
     "threads" {
         #min 1 max 30 current 6 idle 5 stopping 0
         array set thread_info [throttle do throttle server_threads]
-        set rspools [expr {[info command ::bgdelivery] ne "" ? [bgdelivery nr_running] : 0}]
+        #set rspools [expr {[info command ::bgdelivery] ne "" ? [bgdelivery nr_running] : 0}]
         lappend output \
 	    "max.value $thread_info(max)" \
             "current.value $thread_info(current)" \
             "busy.value [expr {$thread_info(current) - $thread_info(idle) - 1}]" \
-            "nrthreads.value [lindex [exec /bin/ps -o nlwp [pid]] 1]" \
-            "rspools.value $rspools"
+            "nrthreads.value [lindex [exec /bin/ps -o nlwp [pid]] 1]" 
+        #"rspools.value $rspools"
     }
     "threadcpu" {
         if {[info command ::xo::system] ne ""} {
