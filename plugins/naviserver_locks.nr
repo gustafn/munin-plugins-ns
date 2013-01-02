@@ -45,7 +45,7 @@ if {$argv eq "config" } {
   puts "total.type DERIVE"
   puts "total.min 0"
   foreach s $config(lockvalues) {
-     set item [string map {: _} $s]
+     set item [string map {: _ . _} $s]
      puts "$item.label $s"
      puts "$item.info Mutex Locks on $s"
      puts "$item.type DERIVE"

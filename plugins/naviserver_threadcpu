@@ -40,13 +40,18 @@ if {$argv eq "config" } {
   puts "graph_vlabel ms"
   puts "graph_category naviserver"
   puts "graph_info This graph shows the CPU time spent in Threads for Naviserver instance $serverName"
+  set graphs ""
   foreach s $config(values) {
-     set item [string map {: _} $s]
+     set item [string map {: _ . _} $s]
+     lappend graphs $item
      puts "$item.label $s"
      puts "$item.info Time Spent in thread $s"
      puts "$item.type DERIVE"
      puts "$item.min 0"
   }
+  puts "sum.cdef [join $graphs ,],[join [lrepeat [expr {[llength $graphs]-1}] +] ,]"
+  puts "sum.label Sum"
+  puts "sum.info toal used time"
   return
 }
 

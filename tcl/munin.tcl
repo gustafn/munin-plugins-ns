@@ -32,7 +32,7 @@ proc mutex_sum {field scale} {
     }
     lappend output "total.value [expr {int($total*$scale)}]"
     foreach s [array names lockvalue] {
-       lappend output "[string map {: _} $s].value [expr {int($lockvalue($s)*$scale)}]"
+       lappend output "[string map {: _ . _} $s].value [expr {int($lockvalue($s)*$scale)}]"
     }
     return $output
 }
@@ -128,7 +128,7 @@ switch [ns_queryget t ""] {
          } else {
            set c 0
          }
-         lappend output "[string map {: _} $v].value $c"
+         lappend output "[string map {: _ . _} $v].value $c"
        }
     }
 
