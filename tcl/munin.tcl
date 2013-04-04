@@ -86,6 +86,7 @@ switch [ns_queryget t ""] {
         set stats [ns_server stats]
         array set serverstats $stats
         set treqs $serverstats(requests)
+        if {$treqs == 0} {set treqs 1}
         set tavgAcceptTime [expr {($serverstats(accepttime) * 1.0 / $treqs)}]
         set tavgQueueTime  [expr {($serverstats(queuetime)  * 1.0 / $treqs)}]
         set tavgFilterTime [expr {($serverstats(filtertime) * 1.0 / $treqs)}]
@@ -93,6 +94,7 @@ switch [ns_queryget t ""] {
         if {[throttle do info exists lastserverstats]} {
            array set lastserverstats [throttle do set lastserverstats]
            set reqs [expr {$serverstats(requests) - $lastserverstats(requests)}]
+           if {$reqs == 0} {set reqs 1}
            set avgAcceptTime [expr {(($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs)}]
            set avgQueueTime  [expr {(($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs)}]
            set avgFilterTime [expr {(($serverstats(filtertime) - $lastserverstats(filtertime))  * 1.0 / $reqs)}]
