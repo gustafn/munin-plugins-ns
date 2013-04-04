@@ -83,8 +83,17 @@ proc cpuinfo {utime stime ttime} {
 }
 switch [ns_queryget t ""] {
     "serverstats" {
-        set stats [ns_server stats]
-        array set serverstats $stats
+        foreach s [ns_info servers] {
+           foreach {att value} [ns_server -server $s stats] {
+              set key serverstats($att)
+              if {![info exists $key]} {
+                 set $key $value
+              } else {
+                 set $key [expr {[set $key] + $value}]
+              }
+           }
+        }
+        set stats [array get serverstats]
         set treqs $serverstats(requests)
         if {$treqs == 0} {set treqs 1}
         set tavgAcceptTime [expr {($serverstats(accepttime) * 1.0 / $treqs)}]
