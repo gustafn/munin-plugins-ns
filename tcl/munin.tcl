@@ -147,7 +147,7 @@ switch [ns_queryget t ""] {
 
     "lsof" {
         array set count {file 0 pipe 0 socket 0 tcp 0 other 0 total 0}
-        foreach l [split [exec /usr/sbin/lsof +p [pid]] \n] {
+        foreach l [split [exec /usr/sbin/lsof -n -P +p [pid]] \n] {
             switch -glob [lindex $l 8] {
 		/* {incr count(file)}
 		pipe {incr count(pipe)}
