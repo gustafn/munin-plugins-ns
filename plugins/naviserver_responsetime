@@ -35,7 +35,7 @@ foreach n [array names config] {
 if {$argv eq "config" } {
   puts "graph_title $serverName Response Time "
   #puts "graph_args --logarithmic --base 1000 -l 1"
-  puts "graph_args --base 1000 -l 0"
+  puts "graph_args --base 1000 -l 0 -u 1 -r"
   puts "graph_category naviserver"
   puts "graph_info This graph shows the current reposonse time for Naviserver instance $serverName"
   puts "graph_vlabel Seconds"

@@ -181,7 +181,7 @@ switch [ns_queryget t ""] {
     }
 
     "memsize" {
-        set sizes [exec /bin/ps -o vsize,rss [pid]]
+        set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
         lappend output \
 	    "vsize.value [expr {[lindex $sizes end-1]*1024}]" \
 	    "rss.value [expr {[lindex $sizes end]*1024}]"
@@ -209,7 +209,7 @@ switch [ns_queryget t ""] {
 	    "max.value $thread_info(max)" \
             "current.value $thread_info(current)" \
             "busy.value [expr {$thread_info(current) - $thread_info(idle) - 1}]" \
-            "nrthreads.value [lindex [exec /bin/ps -o nlwp [pid]] 1]" 
+            "nrthreads.value [lindex [exec -ignorestderr /bin/ps -o nlwp [pid]] 1]" 
         #"rspools.value $rspools"
     }
     "threadcpu" {
