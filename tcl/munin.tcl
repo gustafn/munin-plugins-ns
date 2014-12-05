@@ -191,6 +191,16 @@ switch [ns_queryget t ""] {
     "locks.busy" { set output [mutex_sum nbusy 1] }
     "locks.wait" { set output [mutex_sum totalWait 1000] }
 
+    "logstats" {
+	array set log_info [ns_logctl stats]
+	set logvalues [ns_queryget logvalues ""]
+	foreach s $logvalues {set dolog($s) 1}
+	foreach {key value} [ns_logctl stats] {
+	    if {![info exists dolog($key)]} continue
+	    lappend output $key.value $value
+	}
+    }
+    
     "threads" {
         #min 1 max 30 current 6 idle 5 stopping 0
         array set thread_info [throttle do throttle server_threads]
