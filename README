@@ -12,7 +12,7 @@ the links might contain names for distinguishing these. In order to
 activate a the plugin "naviserver_locks.busy", one might use
 the following link
 
-  ln /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
+  ln -s /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
      /etc/munin/node.d/naviserver_development_locks.busy
 
 to monitor the busy locks on a server instance named "development".
@@ -49,6 +49,10 @@ as well as the hostname an port of the server.
 Consult the plugins for further plugin-specific
 configurations
 
+After configuration, you should restart
+the munin-node, e.g. on an Ubuntu system with
+
+    service munin-node restart
 
 -gustaf neumann        (May 2012)
 
