@@ -192,12 +192,12 @@ switch [ns_queryget t ""] {
     "locks.wait" { set output [mutex_sum totalWait 1000] }
 
     "logstats" {
-	array set log_info [ns_logctl stats]
+	set output ""
 	set logvalues [ns_queryget logvalues ""]
 	foreach s $logvalues {set dolog($s) 1}
 	foreach {key value} [ns_logctl stats] {
 	    if {![info exists dolog($key)]} continue
-	    lappend output $key.value $value
+	    lappend output "$key.value $value"
 	}
     }
     
