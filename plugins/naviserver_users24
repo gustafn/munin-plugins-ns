@@ -1,9 +1,12 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the number of users of a running naviserver instance. 
+# Wildcard-script to monitor the number of users in the last 24h of a
+# running naviserver instance. The script requires an openacs
+# installation with the xotcl request monitor.
+#
 # To monitor a naviserver instance named "development", link this plugin such as:
 #
-#    ln /usr/share/munin/node/plugins-contrib/naviserver_users /etc/munin/node.d/naviserver_development_users
+#    ln /usr/share/munin/node/plugins-contrib/naviserver_users24 /etc/munin/node.d/naviserver_development_users24
 #
 # To configure this plugin put something like the 
 # following into /etc/munin/plugin-conf.d/naviserver

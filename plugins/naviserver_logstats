@@ -1,6 +1,9 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the number of busy mutex locks of a running naviserver instance. 
+# Wildcard-script to monitor the types of entries in the error.log of
+# a running naviserver instance.  The plugin requires naviserver with
+# support of "ns_logctl stats" (post 4.99.6).
+#
 # To monitor a naviserver instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserver_logstats /etc/munin/node.d/naviserver_development_logstats
