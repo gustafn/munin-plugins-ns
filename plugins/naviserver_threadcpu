@@ -13,16 +13,18 @@
 #
 # [naviserver_development_*]
 #    env.address localhost
-#    env.port 8000
-#    env.ssl  false
+#    env.port    8000
+#    env.ssl     false
+#    env.client  tcl
 #
 
 lassign [split $argv0 _] . serverName service
 array set config {
   address localhost
-  port 8000
-  ssl  false
-  url /SYSTEM/munin?t=
+  port    8000
+  ssl     false
+  client  tcl
+  url     /SYSTEM/munin?t=
   values "time:conns time:drivers time:main time:others time:scheds time:tcl:bgdelivery time:tcl:throttle time:writers time:logwriter"
 }
 
@@ -55,17 +57,23 @@ if {$argv eq "config" } {
   return
 }
 
-if {$config(ssl)} {
-  # The following catch is due to a seemingly incorrect setup for tcl in fedora core.
-  if {[catch {package req tls}]} {lappend auto_path /usr/lib/tcl8.5; package req tls}
-  set f [tls::socket $config(address) $config(port)]
+if {$config(client) eq "curl"} {
+  set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
+  set content \n[exec curl -k $url 2> /dev/null]\n
 } else {
-  set f [socket $config(address) $config(port)]
+  if {$config(ssl)} {
+    # The following catch is due to a seemingly incorrect setup for tcl in fedora core.
+    package req tls
+    set f [tls::socket $config(address) $config(port)]
+  } else {
+    set f [socket $config(address) $config(port)]
+  }
+   puts $f "GET $config(url)$service HTTP/1.0\n"
+   flush $f
+   set content [read $f]
+   close $f
 }
-puts $f "GET $config(url)$service HTTP/1.0\n"
-flush $f
-set content [read $f]
-close $f
+
 foreach line [split $content \n] {
    set line [string trim $line]
    if {$line eq ""} {set output 1; continue}
