@@ -65,7 +65,6 @@ if {$config(client) eq "curl"} {
   set content \n[exec curl -k $url 2> /dev/null]\n
 } else {
   if {$config(ssl)} {
-    # The following catch is due to a seemingly incorrect setup for tcl in fedora core.
     package req tls
     set f [tls::socket $config(address) $config(port)]
   } else {
