@@ -222,6 +222,7 @@ switch [ns_queryget t ""] {
         #"rspools.value $rspools"
     }
     "threadcpu" {
+	array set tt {logwriter 0 sum 0}
         if {[info command ::xo::system_stats] ne ""} {
 	   ::xo::system_stats aggcpuinfo ut st tt
         } else {

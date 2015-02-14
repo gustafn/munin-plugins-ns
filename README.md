@@ -39,12 +39,13 @@ activate a the plugin "naviserver_locks.busy" for a server named
 One can automize the linking steps by using the following snippet for
 the chosen plugins
 
-  set plugins="threadcpu serverstats lsof users24 responsetime views users threads memsize"
-  set host="development"
+  plugins="locks.busy locks.nr locks.wait logstats lsof memsize \
+      responsetime serverstats threadcpu threads users users24 views"
+  host="development"
 
   for plugin in $plugins; do
-    set source /usr/share/munin/plugins/naviserver_$plugin
-    set target /etc/munin/plugins/naviserver_${host}_$plugin
+    source=/usr/share/munin/plugins/naviserver_$plugin
+    target=/etc/munin/plugins/naviserver_${host}_$plugin
 	ln -sf $source $target 
   done
 
@@ -83,7 +84,7 @@ Consult the plugins for further plugin-specific
 configurations
 
 After configuration, you should restart
-the munin-node, e.g. on an Ubuntu system with
+the munin-node, e.g. on an Ubuntu/RedHat system with
 
     service munin-node restart
 
