@@ -198,9 +198,15 @@ switch [ns_queryget t ""] {
 	set output ""
 	set logvalues [ns_queryget logvalues ""]
 	foreach s $logvalues {set dolog($s) 1}
-	foreach {key value} [ns_logctl stats] {
-	    if {![info exists dolog($key)]} continue
-	    lappend output "$key.value $value"
+	if {[catch {set pairs [ns_logctl stats]}]} {
+	    foreach key [array names dolog] {
+		lappend output "$key.value 0"
+	    }
+	} else {
+	    foreach {key value} $pairs {
+		if {![info exists dolog($key)]} continue
+		lappend output "$key.value $value"
+	    }
 	}
     }
     

@@ -30,13 +30,25 @@ the plugin source files to
 
 Since one might have multiple instances of naviserver running, the
 links might contain names for distinguishing these. In order to
-activate a the plugin "naviserver_locks.busy", one might use the
-following link
+activate a the plugin "naviserver_locks.busy" for a server named
+"development", one might use the following link
 
   ln -s /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
      /etc/munin/plugins/naviserver_development_locks.busy
 
-to monitor the busy locks on a server instance named "development".
+One can automize the linking steps by using the following snippet for
+the chosen plugins
+
+  set plugins="threadcpu serverstats lsof users24 responsetime views users threads memsize"
+  set host="development"
+
+  for plugin in $plugins; do
+    set source /usr/share/munin/plugins/naviserver_$plugin
+    set target /etc/munin/plugins/naviserver_${host}_$plugin
+	ln -sf $source $target 
+  done
+
+
 
 Furthermore, the interface script for aolserver and/or naviserver
 provided in the subdirectory tcl is needed to be placed at an
@@ -75,7 +87,14 @@ the munin-node, e.g. on an Ubuntu system with
 
     service munin-node restart
 
--gustaf neumann        (May 2012)
+One can check, if a plugin returns a valid value via
+a call like for a server named "development":
+
+     munin-run naviserver_development_users
+
+
+
+-gustaf neumann        (Feb 2015)
 
 
 [1] http://munin-monitoring.org/
