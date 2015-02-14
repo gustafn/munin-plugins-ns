@@ -83,7 +83,9 @@ proc cpuinfo {utime stime ttime} {
 }
 switch [ns_queryget t ""] {
     "serverstats" {
-        foreach s [ns_info servers] {
+	set servers [ns_info servers]
+	if {[llength $servers] == 0} {set servers [ns_info server]}
+        foreach s $servers {
           foreach p [ns_server -server $s pools] {
            foreach {att value} [ns_server -server $s -pool $p stats] {
               set key serverstats($att)
