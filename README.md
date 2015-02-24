@@ -33,22 +33,21 @@ links might contain names for distinguishing these. In order to
 activate a the plugin "naviserver_locks.busy" for a server named
 "development", one might use the following link
 
-  ln -s /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
-     /etc/munin/plugins/naviserver_development_locks.busy
+    ln -s /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
+       /etc/munin/plugins/naviserver_development_locks.busy
 
 One can automize the linking steps by using the following snippet for
 the chosen plugins
 
-  plugins="locks.busy locks.nr locks.wait logstats lsof memsize \
-      responsetime serverstats threadcpu threads users users24 views"
-  host="development"
+    plugins="locks.busy locks.nr locks.wait logstats lsof memsize \
+        responsetime serverstats threadcpu threads users users24 views"
+    host="development"
 
-  for plugin in $plugins; do
-    source=/usr/share/munin/plugins/naviserver_$plugin
-    target=/etc/munin/plugins/naviserver_${host}_$plugin
-	ln -sf $source $target 
-  done
-
+    for plugin in $plugins; do
+      source=/usr/share/munin/plugins/naviserver_$plugin
+      target=/etc/munin/plugins/naviserver_${host}_$plugin
+	  ln -sf $source $target
+    done
 
 
 Furthermore, the interface script for aolserver and/or naviserver
@@ -67,18 +66,18 @@ Configuration:
 
 The plugins can be configured via the file 
 
-  /etc/munin/plugin-conf.d/naviserver
+    /etc/munin/plugin-conf.d/naviserver
 
 where default values can be specified. One can
 specify the url-path leading to the interface script,
 as well as the hostname an port of the server.
 
- [naviserver_*]
-    env.url /SYSTEM/munin?t=
+    [naviserver_*]
+       env.url /SYSTEM/munin?t=
 
- [naviserver_development_*]
-    env.address localhost
-    env.port 8000
+    [naviserver_development_*]
+      env.address localhost
+      env.port 8000
 
 Consult the plugins for further plugin-specific
 configurations
