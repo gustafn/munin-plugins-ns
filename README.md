@@ -56,13 +56,13 @@ accessible url path of the web server (e.g. under the URL
 /SYSTEM/munin.tcl).
 
 
-Requirements:
+=== Requirements:
 
 The plugins require Tcl 8.5 to be installed and work with
 both aolserver (e.g. 4.5.1) and naviserver (e.g. 4.99.6).
 
 
-Configuration:
+=== Configuration:
 
 The plugins can be configured via the file 
 
@@ -90,15 +90,15 @@ the munin-node, e.g. on an Ubuntu/RedHat system with
 One can check, if a plugin returns a valid value via
 a call like for a server named "development":
 
-     munin-run naviserver_development_users
+    munin-run naviserver_development_users
 
 
 
 -gustaf neumann        (Feb 2015)
 
 
-[1] http://munin-monitoring.org/
-[2] http://www.aolserver.com/
-[3] http://sourceforge.net/projects/naviserver/
-[4] http://openacs.org/
+[1] http://munin-monitoring.org/  
+[2] http://www.aolserver.com/  
+[3] http://sourceforge.net/projects/naviserver/  
+[4] http://openacs.org/  
 
