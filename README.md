@@ -57,13 +57,13 @@ accessible url path of the web server (e.g. under the URL
 
 
 Requirements:
-==========
+------------
 
 The plugins require Tcl 8.5 to be installed and work with
 both aolserver (e.g. 4.5.1) and naviserver (e.g. 4.99.6).
 
 Configuration:
-==========
+------------
 
 The plugins can be configured via the file 
 
