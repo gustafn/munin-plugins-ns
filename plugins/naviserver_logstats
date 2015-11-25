@@ -28,7 +28,7 @@ array set config {
   ssl     false
   client  tcl
   url     /SYSTEM/munin?t=
-  logvalues "Warning Error Bug"
+  logvalues "Notice Warning Error Bug"
 }
 
 foreach n [array names config] {
@@ -41,7 +41,7 @@ append service &logvalues=[string map {" " +} $config(logvalues)]
 
 if {$argv eq "config" } {
   puts "graph_title $serverName Log Statistics"
-  puts "graph_args --base 1000 -l 0"
+  puts "graph_args --base 1000 --logarithmic"
   puts "graph_category naviserver"
   puts "graph_info This graph shows the number number of log entries in the error.log of the Naviserver instance $serverName"
   puts {graph_vlabel log entries per ${graph_period}}
