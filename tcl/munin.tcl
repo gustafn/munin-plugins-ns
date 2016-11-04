@@ -104,28 +104,32 @@ switch [ns_queryget t ""] {
         set tavgQueueTime  [expr {($serverstats(queuetime)  * 1.0 / $treqs)}]
         set tavgFilterTime [expr {($serverstats(filtertime) * 1.0 / $treqs)}]
         set tavgRunTime    [expr {($serverstats(runtime)    * 1.0 / $treqs)}]
+        set tavgTraceTime  [expr {($serverstats(tracetime)  * 1.0 / $treqs)}]
         if {[throttle do info exists lastserverstats]} {
-           array set lastserverstats [throttle do set lastserverstats]
-           set reqs [expr {$serverstats(requests) - $lastserverstats(requests)}]
-           if {$reqs == 0} {set reqs 1}
-           set avgAcceptTime [expr {(($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs)}]
-           set avgQueueTime  [expr {(($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs)}]
-           set avgFilterTime [expr {(($serverstats(filtertime) - $lastserverstats(filtertime))  * 1.0 / $reqs)}]
-           set avgRunTime    [expr {(($serverstats(runtime)    - $lastserverstats(runtime))    * 1.0 / $reqs)}]
+	    array set lastserverstats [throttle do set lastserverstats]
+	    set reqs [expr {$serverstats(requests) - $lastserverstats(requests)}]
+	    if {$reqs == 0} {set reqs 1}
+	    set avgAcceptTime [expr {(($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs)}]
+	    set avgQueueTime  [expr {(($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs)}]
+	    set avgFilterTime [expr {(($serverstats(filtertime) - $lastserverstats(filtertime)) * 1.0 / $reqs)}]
+	    set avgRunTime    [expr {(($serverstats(runtime)    - $lastserverstats(runtime))    * 1.0 / $reqs)}]
+	    set avgTraceTime  [expr {(($serverstats(tracetime)  - $lastserverstats(tracetime))  * 1.0 / $reqs)}]
         } else {
-           set avgAcceptTime $tavgAcceptTime
-           set avgQueueTime  $tavgQueueTime
-           set avgFilterTime $tavgQueueTime
-           set avgRunTime    $tavgRunTime
+	    set avgAcceptTime $tavgAcceptTime
+	    set avgQueueTime  $tavgQueueTime
+	    set avgFilterTime $tavgQueueTime
+	    set avgRunTime    $tavgRunTime
+	    set avgTraceTime  $tavgTraceTime
         }
-        set ttotalTime [expr {$tavgQueueTime + $tavgFilterTime + $tavgRunTime}]
-        set totalTime  [expr {$avgQueueTime + $avgFilterTime + $avgRunTime}]
+        set ttotalTime [expr {$tavgQueueTime + $tavgFilterTime + $tavgRunTime + $tavgTraceTime}]
+        set totalTime  [expr {$avgQueueTime  + $avgFilterTime  + $avgRunTime  + $avgTraceTime }]
         throttle do set lastserverstats $stats
         lappend output \
             "accepttime.value [format %6.4f $avgAcceptTime]" \
             "queuetime.value  [format %6.4f $avgQueueTime]" \
             "filtertime.value [format %6.4f $avgFilterTime]" \
             "runtime.value    [format %6.4f $avgRunTime]" \
+            "tracetime.value  [format %6.4f $avgTraceTime]" \
             "totaltime.value  [format %6.4f $totalTime]" \
             "avgqueuetime.value  [format %6.4f $tavgQueueTime]" \
             "avgfiltertime.value [format %6.4f $tavgFilterTime]" \
@@ -212,6 +216,53 @@ switch [ns_queryget t ""] {
 	}
     }
     
+    "dbstats" {
+	set output ""
+	set vars [ns_queryget vars ""]
+	set pool [ns_queryget pool ""]
+	foreach s $vars {set dolog($s) 1}
+	if {[catch {set pairs [ns_db stats]}]} {
+	    foreach key [array names dolog] {
+		lappend output "$key.value 0"
+	    }
+	} else {
+	    foreach {p values} $pairs {
+		if {$p ne $pool} continue
+		foreach {key value} $values {
+		    if {![info exists dolog($key)]} continue
+		    if {![string is integer -strict $value]} {
+			# assume floating point number in secs, compute ms
+			set value [expr {round ($value*1000)}]
+		    }
+		    lappend output "$key.value $value"
+		}
+	    }
+	}
+    }
+
+    "dbstats2" {
+	set output ""
+	set vars [ns_queryget vars ""]
+	foreach s $vars {set dolog($s) 1}
+	if {[catch {set pairs [ns_db stats]}]} {
+	    foreach key [array names dolog] {
+		lappend output "$key.value 0"
+	    }
+	} else {
+	    foreach {pool values} $pairs {
+		foreach {key value} $values {
+		    if {![info exists dolog($key)]} continue
+		    if {![string is integer -strict $value]} {
+			# assume floating point number in secs, compute ms
+			set value [expr {round ($value*1000)}]
+		    }
+		    lappend output "${pool}_$key.value $value"
+		}
+	    }
+	}
+    }
+
+
     "threads" {
         #min 1 max 30 current 6 idle 5 stopping 0
         array set thread_info [throttle do throttle server_threads]
@@ -223,6 +274,7 @@ switch [ns_queryget t ""] {
             "nrthreads.value [lindex [exec -ignorestderr /bin/ps -o nlwp [pid]] 1]" 
         #"rspools.value $rspools"
     }
+
     "threadcpu" {
 	array set tt {logwriter 0 sum 0}
         if {[info command ::xo::system_stats] ne ""} {
