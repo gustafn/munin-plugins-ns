@@ -16,6 +16,7 @@
 #    env.port    8000
 #    env.ssl     false
 #    env.client  tcl
+#    env.urls    / /register/
 #
 
 lassign [split $argv0 _] . serverName service
@@ -25,6 +26,7 @@ array set config {
   ssl     false
   client  tcl
   url     /SYSTEM/munin?t=
+  urls    ""
 }
 
 foreach n [array names config] {
@@ -33,6 +35,8 @@ foreach n [array names config] {
     set config($n) $::env($n)
   }
 }
+
+append service ?urls=[string map {" " + / %2f} $config(urls)]
 
 if {$argv eq "config" } {
   puts "graph_title $serverName Response Time "
@@ -47,6 +51,13 @@ if {$argv eq "config" } {
   puts "response_time_five.label Response Time (last 5 min)"
   puts "response_time_five.info $serverName Response Time (last 5 min)"
   puts "response_time_five.type GAUGE"
+  foreach u $config(urls) {
+      set ds $u
+      regsub -all {[^A-Za-z0-9_]} $ds _ ds
+      puts "u_$ds.label URL $u"
+      puts "u_$ds.info $serverName URL $u"
+      puts "u_$ds.type GAUGE"
+  }
   return
 }
 

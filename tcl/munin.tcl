@@ -175,18 +175,32 @@ switch [ns_queryget t ""] {
     }
 
     "responsetime" {
-	proc avg_last_n {list n var} {
-	  upvar $var cnt
-  	  set total 0.0
-  	  set list [lrange $list end-[incr n -1] end]
-  	  foreach d $list { set total [expr {$total+$d}] }
-  	  set cnt [llength $list]
-  	  return [expr {$cnt > 0 ? $total*1.0/$cnt : 0}]
-	}
-        set tm [throttle trend response_time_minutes]
-        lappend output \
-                "response_time.value [expr {[lindex $tm end]/1000.0}]" \
-                "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]"
+      set urls [ns_queryget urls ""]
+      proc avg_last_n {list n var} {
+        upvar $var cnt
+        set total 0.0
+        set list [lrange $list end-[incr n -1] end]
+        foreach d $list { set total [expr {$total+$d}] }
+        set cnt [llength $list]
+        return [expr {$cnt > 0 ? $total*1.0/$cnt : 0}]
+      }
+      set tm [throttle trend response_time_minutes]
+      set extra ""
+      foreach url $urls {
+        if {[throttle do info exists ::count(calls:$url)]} {
+          set agg_time [throttle do set ::agg_time($url)]
+          set count    [throttle do set ::count(calls:$url)]
+          throttle do unset ::agg_time($url)
+          throttle do unset ::count(calls:$url)
+          set ds $url
+          regsub -all {[^A-Za-z0-9_]} $ds _ ds
+          append extra  "u_$ds.value [expr {$agg_time/($count*1000)}]"
+        }
+      }
+      lappend output \
+          "response_time.value [expr {[lindex $tm end]/1000.0}]" \
+          "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]" \
+          $extra
     }
 
     "memsize" {
@@ -329,3 +343,9 @@ switch [ns_queryget t ""] {
 
 ns_return 200 "text/plain" [join $output \r ]
 
+#
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:
