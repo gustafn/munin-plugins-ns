@@ -36,7 +36,7 @@ foreach n [array names config] {
   }
 }
 
-append service ?urls=[string map {" " + / %2f} $config(urls)]
+append service &urls=[string map {" " + / %2f} $config(urls)]
 
 if {$argv eq "config" } {
   puts "graph_title $serverName Response Time "
