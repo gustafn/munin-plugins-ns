@@ -185,7 +185,7 @@ switch [ns_queryget t ""] {
         return [expr {$cnt > 0 ? $total*1.0/$cnt : 0}]
       }
       set tm [throttle trend response_time_minutes]
-      set extra ""
+      set extra {}
       foreach url $urls {
         if {[throttle do info exists ::count(calls:$url)]} {
           set agg_time [throttle do set ::agg_time($url)]
@@ -194,13 +194,13 @@ switch [ns_queryget t ""] {
           throttle do unset ::count(calls:$url)
           set ds $url
           regsub -all {[^A-Za-z0-9_]} $ds _ ds
-          append extra  "u_$ds.value [expr {$agg_time/($count*1000)}]"
+          lappend extra  "u_$ds.value [expr {$agg_time/($count*1000.0)}]"
         }
       }
       lappend output \
           "response_time.value [expr {[lindex $tm end]/1000.0}]" \
           "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]" \
-          $extra
+          {*}$extra
     }
 
     "memsize" {
