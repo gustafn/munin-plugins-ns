@@ -47,13 +47,13 @@ if {$argv eq "config" } {
      set item [string map {: _ . _} $s]
      lappend graphs $item
      puts "$item.label $s"
-     puts "$item.info Time Spent in thread $s"
+     puts "$item.info Time spent in thread $s"
      puts "$item.type DERIVE"
      puts "$item.min 0"
   }
   puts "sum.cdef [join $graphs ,],[join [lrepeat [expr {[llength $graphs]-1}] +] ,]"
   puts "sum.label Sum"
-  puts "sum.info toal used time"
+  puts "sum.info Total used time"
   return
 }
 
