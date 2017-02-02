@@ -276,7 +276,7 @@ switch [ns_queryget t ""] {
     }
 
     "threadcpu" {
-	array set tt {logwriter 0 sum 0}
+	array set tt {writers 0 logwriter 0 sum 0}
         if {[info command ::xo::system_stats] ne ""} {
 	   ::xo::system_stats aggcpuinfo ut st tt
         } else {
