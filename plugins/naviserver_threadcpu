@@ -51,9 +51,9 @@ if {$argv eq "config" } {
      puts "$item.type DERIVE"
      puts "$item.min 0"
   }
-  puts "sum.cdef [join $graphs ,],[join [lrepeat [expr {[llength $graphs]-1}] +] ,]"
-  puts "sum.label Sum"
-  puts "sum.info Total used time"
+  puts "time_sum.cdef [join $graphs ,],[join [lrepeat [expr {[llength $graphs]-1}] +] ,]"
+  puts "time_sum.label Sum"
+  puts "time_sum.info Total used time"
   return
 }
 
