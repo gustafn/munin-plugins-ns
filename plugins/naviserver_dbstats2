@@ -6,11 +6,11 @@
 #
 # To monitor, link this plugin such as:
 #
-#    ln -s /usr/share/munin/plugins/naviserver_dbstats /etc/munin/plugins/naviserver_development_dbstats_time
-#    ln -s /usr/share/munin/plugins/naviserver_dbstats /etc/munin/plugins/naviserver_development_dbstats_count
+#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats_time
+#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats_count
 #
 # where "development" is the name of the server and
-# "time" and "count" are tow graphics handled by the same plugin.
+# "time" and "count" are two graphics handled by the same plugin.
 # 
 # To configure this plugin put something like the 
 # following into /etc/munin/plugin-conf.d/naviserver
@@ -35,7 +35,7 @@ array set config [subst {
   url /SYSTEM/munin?t=
   vars ""
   pools "pool1 pool2 pool3"
-  graph_period minute
+  graph_period second
   title "DB Statistics $kind"
 }]
 
