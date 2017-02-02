@@ -6,8 +6,8 @@
 #
 # To monitor, link this plugin such as:
 #
-#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats_time
-#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats_count
+#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats2_time
+#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats2_count
 #
 # where "development" is the name of the server and
 # "time" and "count" are two graphics handled by the same plugin.
