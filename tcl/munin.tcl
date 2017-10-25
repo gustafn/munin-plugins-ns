@@ -82,7 +82,8 @@ proc cpuinfo {utime stime ttime} {
     }
 }
 switch [ns_queryget t ""] {
-    "serverstats" {
+  "serverstats" {
+        array set serverstats {tracetime 0}
 	set servers [ns_info servers]
 	if {[llength $servers] == 0} {set servers [ns_info server]}
         foreach s $servers {
@@ -341,7 +342,7 @@ switch [ns_queryget t ""] {
 
 }
 
-ns_return 200 "text/plain" [join $output \r ]
+ns_return 200 "text/plain" [join $output \r\n ]
 
 #
 # Local variables:
