@@ -66,22 +66,22 @@ if {$argv eq "config" } {
   puts "totaltime.info $serverName Total Response Time"
   puts "totaltime.type GAUGE"
   puts "totaltime.colour COLOUR3"
-  puts "avgqueuetime.label Avg Queue Time"
-  puts "avgqueuetime.info $serverName Avg Queue Time"
-  puts "avgqueuetime.type GAUGE"
-  puts "avgqueuetime.colour COLOUR11" ;# 5
-  puts "avgfiltertime.label Avg Filter Time"
-  puts "avgfiltertime.info $serverName Avg Filter Time"
-  puts "avgfiltertime.type GAUGE"
-  puts "avgfiltertime.colour COLOUR5" ;# 11
-  puts "avgruntime.label Avg Run Time"
-  puts "avgruntime.info $serverName Avg Run Time"
-  puts "avgruntime.type GAUGE"
-  puts "avgruntime.colour COLOUR4"
-  puts "avgtotaltime.label Avg Total Response Time"
-  puts "avgtotaltime.info $serverName Avg Total Response Time"
-  puts "avgtotaltime.type GAUGE"
-  puts "avgtotaltime.colour COLOUR8"
+  #puts "avgqueuetime.label Avg Queue Time"
+  #puts "avgqueuetime.info $serverName Avg Queue Time"
+  #puts "avgqueuetime.type GAUGE"
+  #puts "avgqueuetime.colour COLOUR11" ;# 5
+  #puts "avgfiltertime.label Avg Filter Time"
+  #puts "avgfiltertime.info $serverName Avg Filter Time"
+  #puts "avgfiltertime.type GAUGE"
+  #puts "avgfiltertime.colour COLOUR5" ;# 11
+  #puts "avgruntime.label Avg Run Time"
+  #puts "avgruntime.info $serverName Avg Run Time"
+  #puts "avgruntime.type GAUGE"
+  #puts "avgruntime.colour COLOUR4"
+  #puts "avgtotaltime.label Avg Total Response Time"
+  #puts "avgtotaltime.info $serverName Avg Total Response Time"
+  #puts "avgtotaltime.type GAUGE"
+  #puts "avgtotaltime.colour COLOUR8"
   return
 }
 
