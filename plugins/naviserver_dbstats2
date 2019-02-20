@@ -8,6 +8,7 @@
 #
 #    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats2_time
 #    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats2_count
+#    ln -s /usr/share/munin/plugins/naviserver_dbstats2 /etc/munin/plugins/naviserver_development_dbstats2_connected
 #
 # where "development" is the name of the server and
 # "time" and "count" are two graphics handled by the same plugin.
@@ -40,8 +41,9 @@ array set config [subst {
 }]
 
 switch $kind {
-    count {set config(vars) "statements handles"}
-    time  {set config(vars) "waittime sqltime"}
+    count     {set config(vars) "statements handles"; set rrdDST DERIVE}
+    time      {set config(vars) "waittime sqltime"; set rrdDST DERIVE}
+    connected {set config(vars) "connected"; set rrdDST GAUGE}
 }
 
 foreach n [array names config] {
@@ -69,7 +71,7 @@ if {$argv eq "config" } {
 	    set item [string map {: _ . _} ${pool}_$s]
 	    puts "$item.label ${pool}:$s"
 	    puts "$item.info $kind of $s"
-	    puts "$item.type DERIVE"
+	    puts "$item.type $rrdDST"
 	    puts "$item.min 0"
 	}
     }
