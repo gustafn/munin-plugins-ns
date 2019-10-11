@@ -176,7 +176,7 @@ switch [ns_queryget t ""] {
       incr count(total)
     }
     foreach t $types {
-      lappend output $t.value $count($t)
+      lappend output "$t.value $count($t)"
     }
     lappend output "total.value  $count(total)"
   }

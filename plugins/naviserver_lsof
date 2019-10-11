@@ -45,7 +45,7 @@ if {$argv eq "config" } {
 
     foreach t $types i $infos {
         puts "$t.label $t"
-        puts "$t.info $o"
+        puts "$t.info $i"
         puts "$t.type GAUGE"
     }
     return
