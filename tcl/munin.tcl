@@ -63,13 +63,17 @@ proc cpuinfo {utime stime ttime} {
             nswap cnswap ext_signal processor ...
         set name [lindex $t 0]
         switch -glob -- [lindex $t 0] {
-          "-main-"    { set group main }
-          "::*"       { set group tcl:[string range $name 2 end]}
-          "-sched*"   { set group scheds  }
-          "-conn:*"   { set group conns   }
-          "-driver:*" { set group drivers }
           "-asynclogwriter*" { set group logwriter }
-          "-writer*"  { set group writers }
+          "-conn:*"   { set group conn    }
+          "-driver*"  { set group driver  }
+          "-ns_job*"  { set group job     }
+          "-main-"    { set group main    }
+          "-nsproxy*" { set group nsproxy }
+          "-sched*"   { set group sched   }
+          "-socks*"   { set group socks   }
+          "-spooler*" { set group spooler }
+          "-writer*"  { set group writer  }
+          "::*"       { set group tcl:[string range $name 2 end]}
           default     { set group others  }
         }
         if {![info exists ttimes($group)]} {
@@ -157,26 +161,24 @@ switch [ns_queryget t ""] {
   }
 
   "lsof" {
-    array set count {file 0 pipe 0 socket 0 tcp 0 other 0 total 0}
+    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG STSO sock unix other}
+    foreach t $types {set count($t) 0}
     foreach lsof {/usr/sbin/lsof /usr/bin/lsof} {
       if {[file exists $lsof]} break
     }
     foreach l [split [exec $lsof -n -P +p [pid]] \n] {
-      switch -glob [lindex $l 8] {
-        /* {incr count(file)}
-        pipe {incr count(pipe)}
-        socket {incr count(socket)}
-        default {if {[lindex $l 7] eq "TCP"} {incr count(tcp)} else {incr count(other)}}
+      set t [lindex $l 4]
+      if {$t in $types} {
+        incr count($t)
+      } else {
+        incr count(other)
       }
       incr count(total)
     }
-    lappend output \
-        "file.value   $count(file)" \
-        "pipe.value   $count(pipe)" \
-        "socket.value $count(socket)" \
-        "tcp.value    $count(tcp)" \
-        "other.value  $count(other)" \
-        "total.value  $count(total)"
+    foreach t $types {
+      lappend output $t.value $count($t)
+    }
+    lappend output "total.value  $count(total)"
   }
 
   "responsetime" {
@@ -208,13 +210,35 @@ switch [ns_queryget t ""] {
         {*}$extra
   }
 
+  "bandwidth" {
+    set total 0
+    foreach s [ns_info servers] {
+      set server [string map {: _ . _} $s]
+      set server_total($server) 0
+      foreach p [ns_server -server $s pools] {
+        set d [ns_server -server $s -pool $p stats]
+        if {![dict exists $d sent]} continue
+        if {$p eq ""} {set p default}
+        set sent [dict get $d sent]
+        incr server_total($server) $sent
+        incr total $sent
+        lappend output \
+            "sent_${server}_${p}.value $sent"
+      }
+      lappend output \
+          "sent_${server}.value $server_total($server)"
+    }
+    lappend output \
+        "sent_total.value $total"
+  }
+
   "memsize" {
     set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
     lappend output \
         "vsize.value [expr {[lindex $sizes end-1]*1024}]" \
         "rss.value [expr {[lindex $sizes end]*1024}]"
-
   }
+
 
   "locks.nr"   { set output [mutex_sum nlock 1] }
   "locks.busy" { set output [mutex_sum nbusy 1] }
@@ -354,7 +378,7 @@ switch [ns_queryget t ""] {
   "views" {
     set tm [throttle trend minutes]
     set ts [throttle trend seconds]
-    set spools [expr {[info command ::bgdelivery] ne "" ? [bgdelivery do set ::delivery_count] : 0}]
+    set spools [expr {[info command ::bgdelivery] ne "" ? [nsv_array names ::xotcl::THREAD ::bgdelivery] ne "": 0}]
     if {$tm ne ""} {
       set views_per_sec [expr {[lindex $tm end]/60.0}]
       lappend output \

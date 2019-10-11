@@ -25,7 +25,7 @@ array set config {
   ssl     false
   client  tcl
   url     /SYSTEM/munin?t=
-  values "time:conns time:drivers time:main time:others time:scheds time:tcl:bgdelivery time:tcl:throttle time:writers time:logwriter"
+  values "time:logwriter time:conn time:driver time:job time:main time:nsproxy time:sched time:socks time:spooler time:writer time:tcl:bgdelivery time:tcl:throttle time:others"
 }
 
 foreach n [array names config] {

@@ -1,11 +1,11 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the open files of a running naviserver instance. 
+# Wildcard-script to monitor the open files of a running naviserver instance.
 # To monitor a naviserver instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserver_lsof /etc/munin/node.d/naviserver_development_lsof
 #
-# To configure this plugin put something like the 
+# To configure this plugin put something like the
 # following into /etc/munin/plugin-conf.d/naviserver
 #
 # [naviserver_*]
@@ -20,65 +20,63 @@
 
 lassign [split $argv0 _] . serverName service
 array set config {
-  address localhost
-  port    8000
-  ssl     false
-  client  tcl
-  url     /SYSTEM/munin?t=
+    address localhost
+    port    8000
+    ssl     false
+    client  tcl
+    url     /SYSTEM/munin?t=
 }
 
 foreach n [array names config] {
-  if {[info exists ::env($n)]} {
-    #puts "override $n with $::env($n)"
-    set config($n) $::env($n)
-  }
+    if {[info exists ::env($n)]} {
+        #puts "override $n with $::env($n)"
+        set config($n) $::env($n)
+    }
 }
 
 if {$argv eq "config" } {
-  puts "graph_title $serverName open files "
-  puts "graph_category naviserver"
-  puts "graph_info This graph shows the number of currently open files for the Naviserver instance $serverName"
-  puts "graph_args --lower-limit 0"
-  puts "file.label files"
-  puts "file.info Open files"
-  puts "file.type GAUGE"    
-  puts "pipe.label pipes"
-  puts "pipe.info Open pipes"
-  puts "pipe.type GAUGE"    
-  puts "socket.label sockets"
-  puts "socket.info Open sockets"
-  puts "socket.type GAUGE"    
-  puts "tcp.label network"
-  puts "tcp.info Open TCP connections"
-  puts "tcp.type GAUGE"    
-  puts "other.label other"
-  puts "other.info Other Open files"
-  puts "other.type GAUGE"    
-  puts "total.label total"
-  puts "total.info Total open files"
-  puts "total.type GAUGE"    
-  return
+    puts "graph_title $serverName open files "
+    puts "graph_category naviserver"
+    puts "graph_info This graph shows the number of currently open files for the Naviserver instance $serverName"
+    puts "graph_args --lower-limit 0"
+
+    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG STSO sock unix other}
+    set infos {"Character file" "Directory" "Deleted" "FIFO" "IPv4" "IPv6" pipe "Regular File" "Stream Socket" sock unix other}
+
+    foreach t $types i $infos {
+        puts "$t.label $t"
+        puts "$t.info $o"
+        puts "$t.type GAUGE"
+    }
+    return
 }
 
 if {$config(client) eq "curl"} {
-  set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
-  set content \n[exec curl -k $url 2> /dev/null]\n
+    set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
+    set content \n[exec curl -k $url 2> /dev/null]\n
 } else {
-  if {$config(ssl)} {
-    package req tls
-    set f [tls::socket $config(address) $config(port)]
-  } else {
-    set f [socket $config(address) $config(port)]
-  }
-   puts $f "GET $config(url)$service HTTP/1.0\n"
-   flush $f
-   set content [read $f]
-   close $f
+    if {$config(ssl)} {
+        package req tls
+        set f [tls::socket $config(address) $config(port)]
+    } else {
+        set f [socket $config(address) $config(port)]
+    }
+    puts $f "GET $config(url)$service HTTP/1.0\n"
+    flush $f
+    set content [read $f]
+    close $f
 }
 
 foreach line [split $content \n] {
-   set line [string trim $line]
-   if {$line eq ""} {set output 1; continue}
-   if {[info exists output]} {puts $line}
+    set line [string trim $line]
+    if {$line eq ""} {set output 1; continue}
+    if {[info exists output]} {puts $line}
 }
 
+
+#
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 4
+#    indent-tabs-mode: nil
+# End:
