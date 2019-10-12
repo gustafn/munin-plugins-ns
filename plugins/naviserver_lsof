@@ -48,6 +48,9 @@ if {$argv eq "config" } {
         puts "$t.info $i"
         puts "$t.type GAUGE"
     }
+    puts "total.label total"
+    puts "total.info Total number open file descriptors"
+    puts "total.type GAUGE"
     return
 }
 
