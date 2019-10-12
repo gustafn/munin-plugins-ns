@@ -161,13 +161,16 @@ switch [ns_queryget t ""] {
   }
 
   "lsof" {
-    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG STSO sock unix other}
+    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG so STSO sock unix other}
     foreach t $types {set count($t) 0}
     foreach lsof {/usr/sbin/lsof /usr/bin/lsof} {
       if {[file exists $lsof]} break
     }
     foreach l [split [exec $lsof -n -P +p [pid]] \n] {
       set t [lindex $l 4]
+      if {$t eq "REG" && [string match "*.so*" [lindex $l end]]} {
+        set t so
+      }
       if {$t in $types} {
         incr count($t)
       } else {

@@ -40,8 +40,8 @@ if {$argv eq "config" } {
     puts "graph_info This graph shows the number of currently open files for the Naviserver instance $serverName"
     puts "graph_args --lower-limit 0"
 
-    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG STSO sock unix other}
-    set infos {"Character file" "Directory" "Deleted" "FIFO" "IPv4" "IPv6" pipe "Regular File" "Stream Socket" sock unix other}
+    set types {CHR DIR DEL FIFO IPv4 IPv6 PIPE REG so STSO sock unix other}
+    set infos {"Character file" "Directory" "Deleted" "FIFO" "IPv4" "IPv6" pipe "Regular File" "Shared Object" "Stream Socket" sock unix other}
 
     foreach t $types i $infos {
         puts "$t.label $t"
