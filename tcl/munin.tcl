@@ -172,7 +172,6 @@ switch [ns_queryget t ""] {
       #
       if {![string match {[1234567890]*} [lindex $l 3]]} continue
 
-      if {![regexp {^}[lindex $l 3]}
       set t [lindex $l 4]
       if {$t eq "REG" && [string match "*.so*" [lindex $l end]]} {
         set t so
