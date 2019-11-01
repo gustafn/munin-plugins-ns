@@ -1,5 +1,5 @@
 This is a set of plugins for munin [1], where most of the plugins
-provide monitoring functionality for aolserver [2] and naviserver [3].
+provide monitoring functionality for AOLserver [2] and NaviServer [3].
 Most of the functionality of the naviserver* plugins depends on the
 XOTcl request monitor package, which is part of OpenACS [4].
 
@@ -14,7 +14,7 @@ distribution, can be locally configured) or into the "official" munin
 plugin directory
 
     /usr/share/munin/plugins/
-    /opt/local/lib/munin/plugins/ (Mac OS X)
+    /opt/local/lib/munin/plugins/ (macOS)
 
 where you should have already a large set of plugins provided by
 munin.  Be aware that upgrades might overwrite existing plugin scripts
@@ -26,9 +26,9 @@ The munin plugins are typically activated by adding links from
 the plugin source files to 
 
     /etc/munin/plugins/
-    /opt/local/etc/munin/plugins (Mac OS X)
+    /opt/local/etc/munin/plugins (macOS)
 
-Since one might have multiple instances of naviserver running, the
+Since one might have multiple instances of NaviServer running, the
 links might contain names for distinguishing these. In order to
 activate a the plugin "naviserver_locks.busy" for a server named
 "development", one might use the following link
@@ -50,7 +50,7 @@ the chosen plugins
     done
 
 
-Furthermore, the interface script for aolserver and/or naviserver
+Furthermore, the interface script for AOLserver and/or NaviServer
 provided in the subdirectory tcl is needed to be placed at an
 accessible url path of the web server (e.g. under the URL
 /SYSTEM/munin.tcl).
@@ -60,7 +60,7 @@ Requirements:
 ------------
 
 The plugins require Tcl 8.5 to be installed and work with
-both aolserver (e.g. 4.5.1) and naviserver (e.g. 4.99.6).
+both AOLserver (e.g. 4.5.1) and NaviServer (e.g. 4.99.6).
 
 Configuration:
 ------------

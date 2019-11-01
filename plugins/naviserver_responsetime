@@ -1,7 +1,7 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the response time of a running naviserver instance. 
-# To monitor a naviserver instance named "development", link this plugin such as:
+# Wildcard-script to monitor the response time of a running NaviServer instance. 
+# To monitor a NaviServer instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserser_responsetime /etc/munin/node.d/naviserver_development_responsetime
 #

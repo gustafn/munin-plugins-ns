@@ -39,7 +39,7 @@ You cannot specify multiple sizes. The plugin handles only one.
 
 If for some reason you want separate graphs, you can make separately
 named symlinks in the plugins directory on the node (most often either
-/etc/munin/plugins or /etc/opt/munin/plugins), eg. multips_memory_rss and
+/etc/munin/plugins or /etc/opt/munin/plugins), e.g. multips_memory_rss and
 multips_memory_vsize as symlinks to multips_memory and configure them thus:
 
   [multips_memory*]
