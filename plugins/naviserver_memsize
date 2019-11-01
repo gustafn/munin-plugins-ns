@@ -1,11 +1,11 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the memory usage of a running naviserver instance. 
+# Wildcard-script to monitor the memory usage of a running naviserver instance.
 # To monitor a naviserver instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserver_memsize /etc/munin/node.d/naviserver_development_memsize
 #
-# To configure this plugin put something like the 
+# To configure this plugin put something like the
 # following into /etc/munin/plugin-conf.d/naviserver
 #
 # [naviserver_*]
@@ -41,12 +41,24 @@ if {$argv eq "config" } {
   puts "graph_args --lower-limit 0 --base 1024"
   puts "vsize.label vsize"
   puts "vsize.info Virtual memory size"
-  puts "vsize.type GAUGE"    
-  puts "vsize.min 0"    
+  puts "vsize.type GAUGE"
+  puts "vsize.min 0"
   puts "rss.label rss"
   puts "rss.info Resident memory size"
-  puts "rss.type GAUGE"    
-  puts "rss.min 0"  
+  puts "rss.type GAUGE"
+  puts "rss.min 0"
+  puts "uss.label uss"
+  puts "uss.info Unshared memory size"
+  puts "uss.type GAUGE"
+  puts "uss.min 0"
+  puts "pss.label pss"
+  puts "pss.info proportional set size"
+  puts "pss.type GAUGE"
+  puts "pss.min 0"
+  puts "swap.label swap"
+  puts "swap.info swapped out memory size"
+  puts "swap.type GAUGE"
+  puts "swap.min 0"
   return
 }
 
@@ -71,4 +83,3 @@ foreach line [split $content \n] {
    if {$line eq ""} {set output 1; continue}
    if {[info exists output]} {puts $line}
 }
-

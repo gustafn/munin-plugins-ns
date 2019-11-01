@@ -242,9 +242,28 @@ switch [ns_queryget t ""] {
 
   "memsize" {
     set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
+    set vsize [lindex $sizes end-1]
+    set rss   [lindex $sizes end]
+
+    if {[file exists /usr/bin/smem]} {
+      set smem [exec -ignorestderr /usr/bin/smem -t | fgrep [pid]]
+      foreach l [split $smem \n] {
+        regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . pid swap uss pss rss
+        if {$pid eq [pid]} {
+          break
+        }
+      }
+    } else {
+      set swap 0
+      set uss 0
+      set pss 0
+    }
     lappend output \
-        "vsize.value [expr {[lindex $sizes end-1]*1024}]" \
-        "rss.value [expr {[lindex $sizes end]*1024}]"
+        "vsize.value [expr {$vsize * 1024}]" \
+        "rss.value   [expr {$rss * 1024}]" \
+        "uss.value   [expr {$uss * 1024}]" \
+        "pss.value   [expr {$pss * 1024}]" \
+        "swap.value  [expr {$swap * 1024}]"
   }
 
 
