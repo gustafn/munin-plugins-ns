@@ -245,8 +245,15 @@ switch [ns_queryget t ""] {
     set vsize [lindex $sizes end-1]
     set rss   [lindex $sizes end]
 
-    if {[file exists /usr/bin/smem]} {
-      set smem [exec -ignorestderr /usr/bin/smem -t | fgrep [pid]]
+    set smemPath ""
+    foreach path {/usr/bin/smem /bin/smem} {
+      if {[file exists $path]} {
+        set smemPath $path
+        break
+      }
+    }
+    if {$smemPath ne ""} {
+      set smem [exec -ignorestderr $smemPath -t | fgrep [pid]]
       foreach l [split $smem \n] {
         regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . pid swap uss pss rss
         if {$pid eq [pid]} {
