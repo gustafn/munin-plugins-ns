@@ -62,6 +62,8 @@ if {$argv eq "config" } {
     puts "graph_period $config(graph_period)"
     if {$kind eq "count"} {
 	puts {graph_vlabel operations per ${graph_period}}
+    } elseif {$kind eq "connected"} {
+	puts {graph_vlabel number of connections}
     } else {
 	puts {graph_vlabel ms per ${graph_period}}
     }
