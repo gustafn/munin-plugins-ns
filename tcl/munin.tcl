@@ -243,11 +243,14 @@ switch [ns_queryget t ""] {
   "memsize" {
     set uss 0
     if {[file readable /proc/[pid]/statm]} {
+      #
+      # result in pages, typically 4K
+      #
       set F [open /proc/[pid]/statm]; set c [read $F]; close $F
       lassign $c vsize rss shared
-      set uss   [format %.2f [expr {int(($rss-$shared) * 4.096)}]]
-      set rss   [format %.2f [expr {int($rss           * 4.096)}]]
-      set vsize [format %.2f [expr {int($vsize         * 4.096)}]]
+      set uss   [format %.2f [expr {($rss-$shared) * 4}]]
+      set rss   [format %.2f [expr {$rss           * 4}]]
+      set vsize [format %.2f [expr {$vsize         * 4}]]
     }
     if {![info exists rss]} {
       set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
