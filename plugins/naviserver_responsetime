@@ -18,6 +18,9 @@
 #    env.client  tcl
 #    env.urls    / /register/
 #
+# [naviserver_development_responsetime]
+#   env.urls / /register/ /dotlrn/
+#
 
 lassign [split $argv0 _] . serverName service
 array set config {
