@@ -241,10 +241,19 @@ switch [ns_queryget t ""] {
   }
 
   "memsize" {
-    set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
-    set vsize [lindex $sizes end-1]
-    set rss   [lindex $sizes end]
-
+    set uss 0
+    if {[file readable /proc/[pid]/statm]} {
+      set F [open /proc/[pid]/statm]; set c [read $F]; close $F
+      lassign $c vsize rss shared
+      set uss   [format %.2f [expr {int(($rss-$shared) * 4.096)}]]
+      set rss   [format %.2f [expr {int($rss           * 4.096)}]]
+      set vsize [format %.2f [expr {int($vsize         * 4.096)}]]
+    }
+    if {![info exists rss]} {
+      set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
+      set vsize [lindex $sizes end-1]
+      set rss   [lindex $sizes end]
+    }
     set smemPath ""
     foreach path {/usr/bin/smem /bin/smem} {
       if {[file exists $path]} {
@@ -252,18 +261,22 @@ switch [ns_queryget t ""] {
         break
       }
     }
-    if {$smemPath ne ""} {
-      set smem [exec -ignorestderr $smemPath -t | fgrep [pid]]
-      foreach l [split $smem \n] {
-        regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . pid swap uss pss rss
-        if {$pid eq [pid]} {
-          break
+    set swap 0
+    set pss 0
+    #
+    # Ignore errors, e.g. when "exec" cannot be performed due to
+    # "can't fork" etc.
+    #
+    catch {
+      if {$smemPath ne ""} {
+        set smem [exec -ignorestderr $smemPath -t | fgrep [pid]]
+        foreach l [split $smem \n] {
+          regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . pid swap uss pss rss
+          if {$pid eq [pid]} {
+            break
+          }
         }
       }
-    } else {
-      set swap 0
-      set uss 0
-      set pss 0
     }
     lappend output \
         "vsize.value [expr {$vsize * 1024}]" \
