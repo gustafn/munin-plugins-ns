@@ -52,6 +52,7 @@ proc classify_threadname {name} {
     "-socks*"   { set group socks   }
     "-spooler*" { set group spooler }
     "-writer*"  { set group writer  }
+    "-nsjob*"   { set group nsjob   }
     "::*"       { set group tcl:[string range $name 2 end]}
     default     { set group others  }
   }

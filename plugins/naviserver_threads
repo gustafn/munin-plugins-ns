@@ -50,7 +50,7 @@ if {$argv eq "config" } {
     puts "max.type GAUGE"
 
     # "conn" threads are already covered above
-    foreach cat {driver main writer nsproxy logwriter tcl socks sched others} {
+    foreach cat {driver main writer nsproxy nsjob logwriter tcl socks sched others} {
 	puts "$cat.label [string totitle $cat] threads"
 	puts "$cat.info Number of [string totitle $cat] Threads"
 	puts "$cat.type GAUGE"
