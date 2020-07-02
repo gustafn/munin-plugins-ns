@@ -1,11 +1,11 @@
 #!/usr/bin/env tclsh
 #
-# Wildcard-script to monitor the threads of a running NaviServer instance. 
+# Wildcard-script to monitor the threads of a running NaviServer instance.
 # To monitor a NaviServer instance named "development", link this plugin such as:
 #
 #    ln /usr/share/munin/node/plugins-contrib/naviserver_threads /etc/munin/node.d/naviserver_development_threads
 #
-# To configure this plugin put something like the 
+# To configure this plugin put something like the
 # following into /etc/munin/plugin-conf.d/naviserver
 #
 # [naviserver_*]
@@ -20,66 +20,66 @@
 
 lassign [split $argv0 _] . serverName service
 array set config {
-  address localhost
-  port    8000
-  ssl     false
-  client  tcl
-  url     /SYSTEM/munin?t=
+    address localhost
+    port    8000
+    ssl     false
+    client  tcl
+    url     /SYSTEM/munin?t=
 }
 
 foreach n [array names config] {
-  if {[info exists ::env($n)]} {
-    # puts "override $n with $::env($n)"
-    set config($n) $::env($n)
-  }
+    if {[info exists ::env($n)]} {
+	# puts "override $n with $::env($n)"
+	set config($n) $::env($n)
+    }
 }
 
 if {$argv eq "config" } {
-  puts "graph_title $serverName Threads "
-  puts "graph_args --base 1000 -l 0"
-  puts "graph_category naviserver"
-  puts "graph_info This graph shows the current state of connection threads for Naviserver instance $serverName"
-  puts "current.label Current conn threads"
-  puts "current.info Current Number of Connection Threads"
-  puts "current.type GAUGE"
-  puts "busy.label Busy conn threads"
-  puts "busy.info Busy Connection Threads"
-  puts "busy.type GAUGE"
-  puts "max.label Max conn threads"
-  puts "max.info Maximum Number of Connection Threads"
-  puts "max.type GAUGE"
-  puts "nrthreads.label Total running threads"
-  puts "nrthreads.info Total Number of Threads"
-  puts "nrthreads.type GAUGE"
-  #puts "rspools.label Running spools"
-  #puts "rspools.info Running spools"
-  #puts "rspools.type GAUGE"
-  puts "other.cdef nrthreads,current,-"
-  puts "other.label other"
-  puts "other.info Other threads (spool + sched)" 
-  return
+    puts "graph_title $serverName Threads "
+    puts "graph_args --base 1000 -l 0"
+    puts "graph_category naviserver"
+    puts "graph_info This graph shows the current state of connection threads for Naviserver instance $serverName"
+    puts "current.label Current conn threads"
+    puts "current.info Current Number of Connection Threads"
+    puts "current.type GAUGE"
+    puts "busy.label Busy conn threads"
+    puts "busy.info Busy Connection Threads"
+    puts "busy.type GAUGE"
+    puts "max.label Max conn threads"
+    puts "max.info Maximum Number of Connection Threads"
+    puts "max.type GAUGE"
+
+    # "conn" threads are already covered above
+    foreach cat {driver main writer nsproxy logwriter tcl socks sched others} {
+	puts "$cat.label [string totitle $cat] threads"
+	puts "$cat.info Number of [string totitle $cat] Threads"
+	puts "$cat.type GAUGE"
+    }
+    puts "nrthreads.label Total running threads"
+    puts "nrthreads.info Total Number of Threads"
+    puts "nrthreads.type GAUGE"
+    return
 }
 
 if {$config(client) eq "curl"} {
-  set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
-  set content \n[exec curl -k $url 2> /dev/null]\n
+    set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
+    set content \n[exec curl -k $url 2> /dev/null]\n
 } else {
-  if {$config(ssl)} {
-    package req tls
-    set f [tls::socket $config(address) $config(port)]
-  } else {
-    set f [socket $config(address) $config(port)]
-  }
-   puts $f "GET $config(url)$service HTTP/1.0\n"
-   flush $f
-   set content [read $f]
-   close $f
+    if {$config(ssl)} {
+	package req tls
+	set f [tls::socket $config(address) $config(port)]
+    } else {
+	set f [socket $config(address) $config(port)]
+    }
+    puts $f "GET $config(url)$service HTTP/1.0\n"
+    flush $f
+    set content [read $f]
+    close $f
 }
 
 foreach line [split $content \n] {
-   set line [string trim $line]
-   if {$line eq ""} {set output 1; continue}
-   if {[info exists output]} {puts $line}
+    set line [string trim $line]
+    if {$line eq ""} {set output 1; continue}
+    if {[info exists output]} {puts $line}
 }
 puts "other.value 0"   ;# just to get rid of warning "no data" in munin-update.log
-

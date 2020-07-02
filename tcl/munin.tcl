@@ -40,6 +40,24 @@ proc mutex_sum {field scale} {
   return $output
 }
 
+proc classify_threadname {name} {
+  switch -glob -- $name {
+    "-asynclogwriter*" { set group logwriter }
+    "-conn:*"   { set group conn    }
+    "-driver*"  { set group driver  }
+    "-ns_job*"  { set group job     }
+    "-main-"    { set group main    }
+    "-nsproxy*" { set group nsproxy }
+    "-sched*"   { set group sched   }
+    "-socks*"   { set group socks   }
+    "-spooler*" { set group spooler }
+    "-writer*"  { set group writer  }
+    "::*"       { set group tcl:[string range $name 2 end]}
+    default     { set group others  }
+  }
+  return $group
+}
+
 proc cpuinfo {utime stime ttime} {
   upvar $utime utimes $stime stimes $ttime ttimes
   set HZ 100.0 ;# for more reliable handling, we should implement jiffies_to_timespec or jiffies_to_secs in C
@@ -61,21 +79,7 @@ proc cpuinfo {utime stime ttime} {
             numthreads itrealval starttime vsize rss rsslim startcode endcode \
             startstack kstkesp kstkeip signal blocked sigignore sigcatch wchan \
             nswap cnswap ext_signal processor ...
-        set name [lindex $t 0]
-        switch -glob -- [lindex $t 0] {
-          "-asynclogwriter*" { set group logwriter }
-          "-conn:*"   { set group conn    }
-          "-driver*"  { set group driver  }
-          "-ns_job*"  { set group job     }
-          "-main-"    { set group main    }
-          "-nsproxy*" { set group nsproxy }
-          "-sched*"   { set group sched   }
-          "-socks*"   { set group socks   }
-          "-spooler*" { set group spooler }
-          "-writer*"  { set group writer  }
-          "::*"       { set group tcl:[string range $name 2 end]}
-          default     { set group others  }
-        }
+        set group [classify_threadname [lindex $t 0]]
         if {![info exists ttimes($group)]} {
           set utimes($group) 0
           set stimes($group) 0
@@ -381,11 +385,27 @@ switch [ns_queryget t ""] {
         incr busy_total $busy
       }
     }
+    set threadInfo [ns_info threads]
+    set nrthreads [llength $threadInfo]
+    foreach t $threadInfo {
+      set group [classify_threadname [lindex $t 0]]
+      if {[string range $group 0 3] eq "tcl:"} {
+        incr count(tcl)
+      } else {
+        incr count($group)
+      }
+    }
+    #set osthreads [lindex [exec -ignorestderr /bin/ps -o nlwp [pid]] 1]
+    #ns_log notice "nrthreads $nrthreads osthreads $nrthreads"
+
     lappend output \
         "max.value $max_total" \
         "current.value $current_total" \
         "busy.value $busy_total" \
-        "nrthreads.value [lindex [exec -ignorestderr /bin/ps -o nlwp [pid]] 1]"
+        "nrthreads.value $nrthreads"
+    foreach g [array names count] {
+      lappend output "$g.value $count($g)"
+    }
   }
 
   "threadcpu" {
