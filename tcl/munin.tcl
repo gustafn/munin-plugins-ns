@@ -171,7 +171,7 @@ switch [ns_queryget t ""] {
     foreach lsof {/usr/sbin/lsof /usr/bin/lsof} {
       if {[file exists $lsof]} break
     }
-    foreach l [split [exec $lsof -n -P +p [pid]] \n] {
+    foreach l [split [exec $lsof -n -P +p [pid] 2>/dev/null] \n] {
       #
       # Just look for entries with file descriptors.
       #
