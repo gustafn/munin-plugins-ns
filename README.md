@@ -57,13 +57,13 @@ accessible url path of the web server (e.g. under the URL
 
 
 Requirements:
-------------
+-------------
 
-The plugins require Tcl 8.5 to be installed and work with
-both AOLserver (e.g. 4.5.1) and NaviServer (e.g. 4.99.6).
+The plugins require Tcl 8.6 to be installed and work with
+both AOLserver (e.g. 4.5.1) and NaviServer (e.g. 4.99.6) or newer.
 
 Configuration:
-------------
+--------------
 
 The plugins can be configured via the file 
 
@@ -74,7 +74,7 @@ specify the url-path leading to the interface script,
 as well as the hostname an port of the server.
 
     [naviserver_*]
-       env.url /SYSTEM/munin?t=
+       env.url /SYSTEM/munin.tcl?t=
 
     [naviserver_development_*]
        env.address localhost

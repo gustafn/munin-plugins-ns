@@ -56,29 +56,27 @@ switch $argv {
   }
   default {
     set re ([join $config(procs) |])
-    foreach p $config(procs) {
-      set time($p) 0
-    }
+    set time {}
     foreach line [split [exec /bin/ps axo time,comm] \n] {
       lassign $line cputime comm
       if {[regexp $re $comm . match]} {
 	#puts line=$line,COMM=[lindex $line 1]--$match--$cputime
 	if {[regexp {^(\d\d?)?-?(\d+):(\d+):(\d\d)$} $cputime . day h m s]} {
 	  #puts "match day '$day' $h m $m s $s"
-	  if {$day ne ""} {
-	    regsub ^0+(.+) $day \\1 day
-	    incr time($match) [expr {$day*24*60*60}]
-	  }
-	  regsub ^0+(.+) $h \\1 h
-	  regsub ^0+(.+) $m \\1 m
-	  regsub ^0+(.+) $s \\1 s
-	  incr time($match) [expr {$h*60*60 + $m*60 + $s}]
-	  #puts secs=time($match)
+          regsub {^0+(\d+)$} $h \\1 h
+          regsub {^0+(\d+)$} $m \\1 m
+          regsub {^0+(\d+)$} $s \\1 s
+          if {$day ne ""} {
+            regsub {^0+(\d+)$} $day \\1 day
+            incr h [expr {$day*24}]
+          }
+	  dict incr time $match [expr {$h*60*60 + $m*60 + $s}]
+	  #puts secs=[dict get $time $match]
 	}
       }
     }
-    foreach p [array names time] {
-      puts "$p.value $time($p)"
+    foreach {p t} $time {
+      puts "$p.value $t"
     }
   }
 }

@@ -98,7 +98,9 @@ switch [ns_queryget t ""] {
   "serverstats" {
     array set serverstats {tracetime 0}
     set servers [ns_info servers]
-    if {[llength $servers] == 0} {set servers [ns_info server]}
+    if {[llength $servers] == 0} {
+      set servers [ns_info server]
+    }
     foreach s $servers {
       foreach p [ns_server -server $s pools] {
         foreach {att value} [ns_server -server $s -pool $p stats] {
@@ -113,21 +115,23 @@ switch [ns_queryget t ""] {
     }
     set stats [array get serverstats]
     set treqs $serverstats(requests)
-    if {$treqs == 0} {set treqs 1}
-    set tavgAcceptTime [expr {($serverstats(accepttime) * 1.0 / $treqs)}]
-    set tavgQueueTime  [expr {($serverstats(queuetime)  * 1.0 / $treqs)}]
-    set tavgFilterTime [expr {($serverstats(filtertime) * 1.0 / $treqs)}]
-    set tavgRunTime    [expr {($serverstats(runtime)    * 1.0 / $treqs)}]
-    set tavgTraceTime  [expr {($serverstats(tracetime)  * 1.0 / $treqs)}]
+    if {$treqs == 0} {
+      set treqs 1
+    }
+    set tavgAcceptTime [expr {$serverstats(accepttime) * 1.0 / $treqs}]
+    set tavgQueueTime  [expr {$serverstats(queuetime)  * 1.0 / $treqs}]
+    set tavgFilterTime [expr {$serverstats(filtertime) * 1.0 / $treqs}]
+    set tavgRunTime    [expr {$serverstats(runtime)    * 1.0 / $treqs}]
+    set tavgTraceTime  [expr {$serverstats(tracetime)  * 1.0 / $treqs}]
     if {[throttle do info exists lastserverstats]} {
       array set lastserverstats [throttle do set lastserverstats]
       set reqs [expr {$serverstats(requests) - $lastserverstats(requests)}]
       if {$reqs == 0} {set reqs 1}
-      set avgAcceptTime [expr {(($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs)}]
-      set avgQueueTime  [expr {(($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs)}]
-      set avgFilterTime [expr {(($serverstats(filtertime) - $lastserverstats(filtertime)) * 1.0 / $reqs)}]
-      set avgRunTime    [expr {(($serverstats(runtime)    - $lastserverstats(runtime))    * 1.0 / $reqs)}]
-      set avgTraceTime  [expr {(($serverstats(tracetime)  - $lastserverstats(tracetime))  * 1.0 / $reqs)}]
+      set avgAcceptTime [expr {($serverstats(accepttime) - $lastserverstats(accepttime)) * 1.0 / $reqs}]
+      set avgQueueTime  [expr {($serverstats(queuetime)  - $lastserverstats(queuetime))  * 1.0 / $reqs}]
+      set avgFilterTime [expr {($serverstats(filtertime) - $lastserverstats(filtertime)) * 1.0 / $reqs}]
+      set avgRunTime    [expr {($serverstats(runtime)    - $lastserverstats(runtime))    * 1.0 / $reqs}]
+      set avgTraceTime  [expr {($serverstats(tracetime)  - $lastserverstats(tracetime))  * 1.0 / $reqs}]
     } else {
       set avgAcceptTime $tavgAcceptTime
       set avgQueueTime  $tavgQueueTime
@@ -154,10 +158,10 @@ switch [ns_queryget t ""] {
   "count" {
     set output ""
     set vars [ns_queryget vars ""]
-    array set count [throttle do array get ::count]
+    set count [throttle do array get ::count]
     foreach v $vars {
-      if {[info exists count($v)]} {
-        set c $count($v)
+      if {[dict exists $count $v]} {
+        set c [dict get $count $v]
       } else {
         set c 0
       }
