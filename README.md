@@ -30,7 +30,7 @@ the plugin source files to
 
 Since one might have multiple instances of NaviServer running, the
 links might contain names for distinguishing these. In order to
-activate a the plugin "naviserver_locks.busy" for a server named
+activate the plugin "naviserver_locks.busy" for a server named
 "development", one might use the following link
 
     ln -s /usr/share/munin/node/plugins-contrib/naviserver_locks.busy \
