@@ -451,22 +451,24 @@ switch [ns_queryget t ""] {
   }
 
   "views" {
-    set tm [throttle trend minutes]
     set ts [throttle trend seconds]
     set spools [expr {[info command ::bgdelivery] ne "" ? [nsv_array names ::xotcl::THREAD ::bgdelivery] ne "": 0}]
+    lappend output \
+        "views_seconds.value [lindex $ts end]" \
+        "requests.value [ns_server connections]" \
+        "spools.value $spools" \
+        "alt_views.value [throttle do set ::threads_datapoints]"
+
+    set tm [throttle trend minutes]
     if {$tm ne ""} {
       set views_per_sec [expr {[lindex $tm end]/60.0}]
       lappend output \
-          "views_seconds.value [lindex $ts end]" \
           "views_minutes.value $views_per_sec" \
-          "requests.value [ns_server connections]" \
-          "alt_views.value [throttle do set ::threads_datapoints]" \
-          "spools.value $spools"
     }
   }
 
   default {
-    lappend  output "unknown.value 0"
+    lappend output "unknown.value 0"
   }
 
 }
