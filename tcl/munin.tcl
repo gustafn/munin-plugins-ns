@@ -221,10 +221,12 @@ switch [ns_queryget t ""] {
         lappend extra  "u_$ds.value [expr {$agg_time/($count*1000.0)}]"
       }
     }
-    lappend output \
-        "response_time.value [expr {[lindex $tm end]/1000.0}]" \
-        "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]" \
-        {*}$extra
+    if {$tm ne ""} {
+      lappend output \
+          "response_time.value [expr {[lindex $tm end]/1000.0}]" \
+          "response_time_five.value [expr {[avg_last_n $tm 5 cnt]/1000.0}]"
+    }
+    lappend output {*}$extra
   }
 
   "bandwidth" {
