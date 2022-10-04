@@ -283,10 +283,9 @@ switch [ns_queryget t ""] {
     #
     catch {
       if {$smemPath ne ""} {
-        set smem [exec -ignorestderr $smemPath -t | fgrep [pid]]
+        set smem [exec -ignorestderr $smemPath -t]
         foreach l [split $smem \n] {
-          regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . pid swap uss pss rss
-          if {$pid eq [pid]} {
+          if {[regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . _pid swap uss pss rss] && $_pid eq [pid]} {
             break
           }
         }
