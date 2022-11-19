@@ -19,6 +19,8 @@
 # Gustaf Neumann      (May 2012)
 #
 
+set memsize_with_pss 0
+
 proc mutex_sum {field scale} {
   set lockvalues [ns_queryget lockvalues ""]
   foreach s $lockvalues {set lockvalue($s) 0}
@@ -268,29 +270,41 @@ switch [ns_queryget t ""] {
       set vsize [lindex $sizes end-1]
       set rss   [lindex $sizes end]
     }
-    set smemPath ""
-    foreach path {/usr/bin/smem /bin/smem} {
-      if {[file exists $path]} {
-        set smemPath $path
-        break
-      }
-    }
+
+    #
+    # The calculation of "swap" and "pss" is optional, since the the
+    # python script "smem" is quite slow, especially when large
+    # amounts of memory are used. On every site seen so far, the "pss"
+    # value and "rss" values for NaviServer are the same, so the
+    # additional value is little.
+    #
     set swap 0
     set pss 0
-    #
-    # Ignore errors, e.g. when "exec" cannot be performed due to
-    # "can't fork" etc.
-    #
-    catch {
-      if {$smemPath ne ""} {
-        set smem [exec -ignorestderr $smemPath -t]
-        foreach l [split $smem \n] {
-          if {[regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . _pid swap uss pss rss] && $_pid eq [pid]} {
-            break
+
+    if {$memsize_with_pss} {
+      set smemPath ""
+      foreach path {/usr/bin/smem /bin/smem} {
+        if {[file exists $path]} {
+          set smemPath $path
+          break
+        }
+      }
+      #
+      # Ignore errors, e.g. when "exec" cannot be performed due to
+      # "can't fork" etc.
+      #
+      catch {
+        if {$smemPath ne ""} {
+          set smem [exec -ignorestderr $smemPath -t]
+          foreach l [split $smem \n] {
+            if {[regexp {^\s*(\d+)\s.*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$} $l . _pid swap uss pss rss] && $_pid eq [pid]} {
+              break
+            }
           }
         }
       }
     }
+
     lappend output \
         "vsize.value [expr {$vsize * 1024}]" \
         "rss.value   [expr {$rss * 1024}]" \
@@ -474,7 +488,30 @@ switch [ns_queryget t ""] {
 
 }
 
-ns_return 200 "text/plain" [join $output \r\n ]
+#
+# The variable "output" has the format in a form as suited by munin:
+#
+#    vsize.value 2723577856.0
+#    rss.value   1990340608.0
+#    uss.value   1964593152.0
+#
+# Other output formats have to convert this accordingly
+#
+switch [ns_queryget format ""] {
+  prtg {
+    set result "<?xml version='1.0' encoding='UTF-8' ?>\n<prtg>\n"
+    foreach pair $output {
+      lassign $pair name value
+      regsub {[.]value$} $name "" name
+      append result [subst {<result><channel>$name</channel><value>$value</value></result>}] \n
+    }
+    append result "</prtg>\n"
+    ns_return 200 "text/xml" $result
+  }
+  default {
+    ns_return 200 "text/plain" [join $output \r\n ]
+  }
+}
 
 #
 # Local variables:
