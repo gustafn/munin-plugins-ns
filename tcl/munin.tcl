@@ -96,6 +96,29 @@ proc cpuinfo {utime stime ttime} {
   }
 }
 
+proc memsizes {pid} {
+  #
+  # return a dict of memory sizes of pid in number of 1K blocks
+  #
+  lassign {0 0 0} uss rss vsize
+  if {[file readable /proc/$pid/statm]} {
+    #
+    # result in pages, typically 4K
+    #
+    set F [open /proc/$pid/statm]; set c [read $F]; close $F
+    lassign $c vsize rss shared
+    set uss   [format %.2f [expr {($rss-$shared) * 4}]]
+    set rss   [format %.2f [expr {$rss           * 4}]]
+    set vsize [format %.2f [expr {$vsize         * 4}]]
+  }
+  if {$rss == 0} {
+    set sizes [exec -ignorestderr /bin/ps -o vsize,rss $pid]
+    set vsize [lindex $sizes end-1]
+    set rss   [lindex $sizes end]
+  }
+  return [list rss $rss vsize $vsize uss $uss]
+}
+
 switch [ns_queryget t ""] {
   "serverstats" {
     array set serverstats {tracetime 0}
@@ -177,7 +200,7 @@ switch [ns_queryget t ""] {
     foreach lsof {/usr/sbin/lsof /usr/bin/lsof} {
       if {[file exists $lsof]} break
     }
-    foreach l [split [exec $lsof -n -P +p [pid] 2>/dev/null] \n] {
+    foreach l [split [exec -ignorestderr -- $lsof -n -P +p [pid] 2>/dev/null] \n] {
       #
       # Just look for entries with file descriptors.
       #
@@ -254,21 +277,22 @@ switch [ns_queryget t ""] {
   }
 
   "memsize" {
-    set uss 0
-    if {[file readable /proc/[pid]/statm]} {
-      #
-      # result in pages, typically 4K
-      #
-      set F [open /proc/[pid]/statm]; set c [read $F]; close $F
-      lassign $c vsize rss shared
-      set uss   [format %.2f [expr {($rss-$shared) * 4}]]
-      set rss   [format %.2f [expr {$rss           * 4}]]
-      set vsize [format %.2f [expr {$vsize         * 4}]]
+    set memsizes [memsizes [pid]]
+    foreach v {rss vsize uss} {
+      set $v [dict get $memsizes $v]
     }
-    if {![info exists rss]} {
-      set sizes [exec -ignorestderr /bin/ps -o vsize,rss [pid]]
-      set vsize [lindex $sizes end-1]
-      set rss   [lindex $sizes end]
+
+    set nsproxy_output ""
+    foreach pool [lsort [ns_proxy pools]] {
+      set count 0
+      foreach pid [lsort [ns_proxy pids $pool]] {
+        incr count
+        set proxysizes [memsizes $pid]
+        set name nsproxy:$pool:$count
+        foreach v {rss vsize uss} {
+          lappend nsproxy_output "${name}:$v.value [expr {[dict get $proxysizes $v] * 1024}]"
+        }
+      }
     }
 
     #
@@ -310,7 +334,8 @@ switch [ns_queryget t ""] {
         "rss.value   [expr {$rss * 1024}]" \
         "uss.value   [expr {$uss * 1024}]" \
         "pss.value   [expr {$pss * 1024}]" \
-        "swap.value  [expr {$swap * 1024}]"
+        "swap.value  [expr {$swap * 1024}]" \
+        {*}$nsproxy_output
   }
 
 

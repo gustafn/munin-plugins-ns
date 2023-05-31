@@ -34,52 +34,92 @@ foreach n [array names config] {
   }
 }
 
+proc emit_config {{content ""}} {
+    global serverName
+
+    puts "graph_title $serverName nsd size "
+    puts "graph_category naviserver"
+    puts "graph_info This graph shows the current memory usage for Naviserver instance $serverName"
+    puts "graph_args --lower-limit 0 --base 1024"
+    #puts "vsize.label vsize"
+    puts "vsize.info Virtual memory size"
+    #puts "vsize.type GAUGE"
+    #puts "vsize.min 0"
+    #puts "rss.label rss"
+    puts "rss.info Resident memory size"
+    #puts "rss.type GAUGE"
+    #puts "rss.min 0"
+    #puts "uss.label uss"
+    puts "uss.info Unshared memory size"
+    #puts "uss.type GAUGE"
+    #puts "uss.min 0"
+    #puts "pss.label pss"
+    puts "pss.info proportional set size"
+    #puts "pss.type GAUGE"
+    #puts "pss.min 0"
+    #puts "swap.label swap"
+    puts "swap.info swapped out memory size"
+    #puts "swap.type GAUGE"
+    #puts "swap.min 0"
+
+    if {$content eq ""} {
+        foreach name {vsize rss uss swap} {
+            puts "$name.label $name"
+            puts "$name.type GAUGE"
+            puts "$name.min 0"
+        }
+    } else {
+        foreach line [split $content \n] {
+            set line [string trim $line]
+            if {[regexp {^(.*)[.]value} $line . name]} {
+                puts "$name.label $name"
+                puts "$name.type GAUGE"
+                puts "$name.min 0"
+            }
+        }
+    }
+}
+
+proc fetch_values {} {
+    global config service
+    if {$config(client) eq "curl"} {
+        set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
+        set content \n[exec curl -k $url 2> /dev/null]\n
+    } else {
+        if {$config(ssl)} {
+            package req tls
+            set f [tls::socket $config(address) $config(port)]
+        } else {
+            set f [socket $config(address) $config(port)]
+        }
+        puts $f "GET $config(url)$service HTTP/1.0\n"
+        flush $f
+        set content [read $f]
+        close $f
+    }
+    return $content
+}
+proc emit_values {content} {
+    foreach line [split $content \n] {
+        global output
+        set line [string trim $line]
+        if {$line eq ""} {set output 1; continue}
+        if {[info exists output]} {puts $line}
+    }
+}
+
+#puts stderr "MUNIN_CAP_DIRTYCONFIG [info exists env(MUNIN_CAP_DIRTYCONFIG)] [array names ::env MUNIN*]"
+
+try {
+    set fetched_values [fetch_values]
+} on error {errorMsg} {
+    set fetched_values ""
+}
 if {$argv eq "config" } {
-  puts "graph_title $serverName nsd size "
-  puts "graph_category naviserver"
-  puts "graph_info This graph shows the current memory usage for Naviserver instance $serverName"
-  puts "graph_args --lower-limit 0 --base 1024"
-  puts "vsize.label vsize"
-  puts "vsize.info Virtual memory size"
-  puts "vsize.type GAUGE"
-  puts "vsize.min 0"
-  puts "rss.label rss"
-  puts "rss.info Resident memory size"
-  puts "rss.type GAUGE"
-  puts "rss.min 0"
-  puts "uss.label uss"
-  puts "uss.info Unshared memory size"
-  puts "uss.type GAUGE"
-  puts "uss.min 0"
-  puts "pss.label pss"
-  puts "pss.info proportional set size"
-  puts "pss.type GAUGE"
-  puts "pss.min 0"
-  puts "swap.label swap"
-  puts "swap.info swapped out memory size"
-  puts "swap.type GAUGE"
-  puts "swap.min 0"
-  return
+    emit_config $fetched_values
+    return
 }
 
-if {$config(client) eq "curl"} {
-  set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
-  set content \n[exec curl -k $url 2> /dev/null]\n
-} else {
-  if {$config(ssl)} {
-    package req tls
-    set f [tls::socket $config(address) $config(port)]
-  } else {
-    set f [socket $config(address) $config(port)]
-  }
-   puts $f "GET $config(url)$service HTTP/1.0\n"
-   flush $f
-   set content [read $f]
-   close $f
-}
-
-foreach line [split $content \n] {
-   set line [string trim $line]
-   if {$line eq ""} {set output 1; continue}
-   if {[info exists output]} {puts $line}
-}
+set fetched_values [fetch_values]
+emit_config $fetched_values
+emit_values $fetched_values
