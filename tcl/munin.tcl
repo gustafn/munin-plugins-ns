@@ -332,10 +332,13 @@ switch [ns_queryget t ""] {
     lappend output \
         "vsize.value [expr {$vsize * 1024}]" \
         "rss.value   [expr {$rss * 1024}]" \
-        "uss.value   [expr {$uss * 1024}]" \
-        "pss.value   [expr {$pss * 1024}]" \
-        "swap.value  [expr {$swap * 1024}]" \
-        {*}$nsproxy_output
+        "uss.value   [expr {$uss * 1024}]"
+    if {$memsize_with_pss} {
+      lappend output \
+          "pss.value   [expr {$pss * 1024}]" \
+          "swap.value  [expr {$swap * 1024}]"
+    }
+    lappend output {*}$nsproxy_output
   }
 
 
