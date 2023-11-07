@@ -3,7 +3,7 @@
 # Wildcard-script to monitor the response time of a running NaviServer instance. 
 # To monitor a NaviServer instance named "development", link this plugin such as:
 #
-#    ln /usr/share/munin/node/plugins-contrib/naviserser_serverstats /etc/munin/node.d/naviserver_development_serverstats
+#    ln /usr/share/munin/node/plugins-contrib/naviserver_serverstats /etc/munin/node.d/naviserver_development_serverstats
 #
 # To configure this plugin put something like the 
 # following into /etc/munin/plugin-conf.d/naviserver
