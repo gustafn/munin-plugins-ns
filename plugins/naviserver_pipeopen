@@ -1,0 +1,79 @@
+#!/usr/bin/env tclsh
+#
+# Wildcard-script to monitor the time of a pipe open operation in
+# NaviServer instance. Versions up to Tcl 8.6.13 use the fork
+# operation for a pipe-open, which might be quite slow, especially
+# when the memory footprint is large and when NaviServer runs in an VM.
+#
+# To monitor a NaviServer instance named "development", link this plugin such as:
+#
+#    ln /usr/share/munin/node/plugins-contrib/naviserver_pipeopen /etc/munin/node.d/naviserver_development_pipeopen
+#
+# To configure this plugin put something like the 
+# following into /etc/munin/plugin-conf.d/naviserver
+#
+# [naviserver_*]
+#    env.url /SYSTEM/munin?t=
+#
+# [naviserver_development_*]
+#    env.address localhost
+#    env.port    8000
+#    env.ssl     false
+#    env.client  tcl
+#    env.urls    / /register/
+#
+#
+
+lassign [split $argv0 _] . serverName service
+array set config {
+  address localhost
+  port    8000
+  ssl     false
+  client  tcl
+  url     /SYSTEM/munin?t=
+  urls    ""
+}
+
+foreach n [array names config] {
+  if {[info exists ::env($n)]} {
+    #puts "override $n with $::env($n)"
+    set config($n) $::env($n)
+  }
+}
+
+append service &urls=[string map {" " + / %2f} $config(urls)]
+
+if {$argv eq "config" } {
+  puts "graph_title $serverName Pipe Open Time "
+  puts "graph_args --base 1000 -l 0 -u 1 -r"
+  puts "graph_category naviserver"
+  puts "graph_info This graph shows the time for a pipe open operation in Naviserver instance $serverName"
+  puts "graph_vlabel Seconds"
+  puts "pipe_open.label Pipe Open Time"
+  puts "pipe_open.info $serverName Pipe Open Time"
+  puts "pipe_open.type GAUGE"
+  return
+}
+
+if {$config(client) eq "curl"} {
+  set url [expr {$config(ssl) ? "https" : "http"}]://$config(address):$config(port)/$config(url)$service
+  set content \n[exec curl -k $url 2> /dev/null]\n
+} else {
+  if {$config(ssl)} {
+    package req tls
+    set f [tls::socket $config(address) $config(port)]
+  } else {
+    set f [socket $config(address) $config(port)]
+  }
+   puts $f "GET $config(url)$service HTTP/1.0\n"
+   flush $f
+   set content [read $f]
+   close $f
+}
+
+foreach line [split $content \n] {
+   set line [string trim $line]
+   if {$line eq ""} {set output 1; continue}
+   if {[info exists output]} {puts $line}
+}
+

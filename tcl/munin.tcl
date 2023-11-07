@@ -223,6 +223,12 @@ switch [ns_queryget t ""] {
     lappend output "total.value  $count(total)"
   }
 
+  "pipeopen" {
+    set t [clock milliseconds]
+    set f [open "|cat" w]; puts $f "hi"; close $f
+    lappend output "pipe_open.value [expr {[clock milliseconds] - $t}]"
+  }
+
   "responsetime" {
     set urls [ns_queryget urls ""]
     proc avg_last_n {list n var} {
