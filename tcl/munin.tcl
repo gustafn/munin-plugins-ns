@@ -45,19 +45,19 @@ proc mutex_sum {field scale} {
 proc classify_threadname {name} {
   switch -glob -- $name {
     "-asynclogwriter*" { set group logwriter }
-    "-conn:*"       { set group conn    }
-    "-driver*"      { set group driver  }
-    "-ns_job*"      { set group job     }
-    "-main-"        { set group main    }
-    "-nsproxy*"     { set group nsproxy }
-    "-sched*"       { set group sched   }
-    "-socks*"       { set group socks   }
-    "-spooler*"     { set group spooler }
-    "-writer*"      { set group writer  }
-    "-nsjob*"       { set group nsjob   }
-    "-task:tclhttp" { set group tclhttp }
-    "::*"           { set group tcl:[string range $name 2 end]}
-    default         { set group others  }
+    "-conn:*"          { set group conn    }
+    "-driver*"         { set group driver  }
+    "-ns_job*"         { set group job     }
+    "-main-"           { set group main    }
+    "-nsproxy*"        { set group nsproxy }
+    "-sched*"          { set group sched   }
+    "-socks*"          { set group socks   }
+    "-spooler*"        { set group spooler }
+    "-writer*"         { set group writer  }
+    "-nsjob*"          { set group nsjob   }
+    "-task:tclhttp*"   { set group tclhttp }
+    "::*"              { set group tcl:[string range $name 2 end]}
+    default            { set group others  }
   }
   return $group
 }
