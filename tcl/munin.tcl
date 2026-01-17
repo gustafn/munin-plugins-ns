@@ -243,7 +243,7 @@ switch [ns_queryget t ""] {
     set tm [throttle trend response_time_minutes]
     set extra {}
     foreach url $urls {
-      if {[throttle do info exists ::count(calls:$url)]} {
+      if {[throttle do expr [subst -nocommand {[info exists ::count(calls:$url)] && [info exists ::agg_time($url)]}]]} {
         set agg_time [throttle do set ::agg_time($url)]
         set count    [throttle do set ::count(calls:$url)]
         throttle do unset ::agg_time($url)
