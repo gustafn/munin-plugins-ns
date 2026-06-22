@@ -242,17 +242,49 @@ switch [ns_queryget t ""] {
     }
     set tm [throttle trend response_time_minutes]
     set extra {}
-    foreach url $urls {
-      if {[throttle do expr [subst -nocommand {[info exists ::count(calls:$url)] && [info exists ::agg_time($url)]}]]} {
-        set agg_time [throttle do set ::agg_time($url)]
-        set count    [throttle do set ::count(calls:$url)]
-        throttle do unset ::agg_time($url)
-        throttle do unset ::count(calls:$url)
-        set ds $url
-        regsub -all {[^A-Za-z0-9_]} $ds _ ds
-        lappend extra  "u_$ds.value [expr {$agg_time/($count*1000.0)}]"
+    # foreach url $urls {
+    #   if {[throttle do expr [subst -nocommand {[info exists ::count(calls:$url)] && [info exists ::agg_time($url)]}]]} {
+    #     set agg_time [throttle do set ::agg_time($url)]
+    #     set count    [throttle do set ::count(calls:$url)]
+    #     throttle do unset ::agg_time($url)
+    #     throttle do unset ::count(calls:$url)
+    #     set ds $url
+    #     regsub -all {[^A-Za-z0-9_]} $ds _ ds
+    #     lappend extra  "u_$ds.value [expr {$agg_time/($count*1000.0)}]"
+    #   }
+    # }
+    set samples [throttle do apply {{urls} {
+      set result {}
+
+      foreach url $urls {
+        set countKey calls:$url
+
+        if {![info exists ::count($countKey)]
+            || ![info exists ::agg_time($url)]
+          } {
+          continue
+        }
+
+        set agg_time $::agg_time($url)
+        set count    $::count($countKey)
+
+        unset -nocomplain ::agg_time($url) ::count($countKey)
+
+        if {$count > 0} {
+          lappend result $url $agg_time $count
+        }
       }
+
+      return $result
+    }} $urls]
+
+    foreach {url agg_time count} $samples {
+      set ds $url
+      regsub -all {[^A-Za-z0-9_]} $ds _ ds
+      lappend extra "u_$ds.value [expr {$agg_time / ($count * 1000.0)}]"
     }
+
+
     if {$tm ne ""} {
       lappend output \
           "response_time.value [expr {[lindex $tm end]/1000.0}]" \
