@@ -34,79 +34,66 @@ foreach n [array names config] {
   }
 }
 
-proc emit_field_config {name} {
-    array set fieldInfo {
-        vsize                       "Virtual memory size"
-        rss                         "Resident memory size"
-        uss                         "Unshared memory size"
-        pss                         "Proportional set size"
-        swap                        "Swap usage"
+#
+# Field configuration table:
+#
+#   internal-name label draw info
+#
+# The draw value is one of LINE2, LINE1, LINE0.
+#
+set ::fieldConfig {
+    vsize                         {vsize             LINE2 "Virtual memory size"}
+    rss                           {rss               LINE2 "Resident memory size"}
+    uss                           {uss               LINE1 "Unshared memory size"}
+    pss                           {pss               LINE0 "Proportional set size"}
+    swap                          {swap              LINE0 "Swap usage"}
 
-        tcmalloc_current_allocated  "Bytes currently allocated by the application according to tcmalloc"
-        tcmalloc_heap_size          "Total heap size obtained by tcmalloc from the operating system"
-        tcmalloc_total_physical     "Physical memory currently used by tcmalloc"
-        tcmalloc_pageheap_free      "Bytes in the tcmalloc page heap freelist"
-        tcmalloc_pageheap_unmapped  "Bytes in the tcmalloc page heap returned/unmapped to the operating system"
+    tcmalloc_current_allocated    {"tc current"      LINE2 "Bytes currently allocated by the application according to tcmalloc"}
+    tcmalloc_heap_size            {"tc heap"         LINE2 "Total heap size obtained by tcmalloc from the operating system"}
+    tcmalloc_total_physical       {"tc physical"     LINE2 "Physical memory currently used by tcmalloc"}
+
+    tcmalloc_slack                {"tc slack"        LINE0 "Bytes held by tcmalloc but not currently allocated to the application"}
+    tcmalloc_pageheap_free        {"tc pagefree"     LINE1 "Bytes in the tcmalloc page heap freelist"}
+    tcmalloc_pageheap_committed   {"tc pagecommit"   LINE0 "Bytes committed in the tcmalloc page heap"}
+    tcmalloc_pageheap_unmapped    {"tc unmapped"     LINE0 "Bytes in the tcmalloc page heap returned/unmapped to the operating system"}
+
+    tcmalloc_central_free         {"tc central"      LINE0 "Bytes in the tcmalloc central cache freelist"}
+    tcmalloc_transfer_free        {"tc transfer"     LINE0 "Bytes in the tcmalloc transfer cache freelist"}
+    tcmalloc_thread_free          {"tc thread"       LINE0 "Bytes in tcmalloc thread cache freelists"}
+    tcmalloc_total_thread_cache   {"tc thread total" LINE0 "Total bytes currently held in tcmalloc thread caches"}
+    tcmalloc_max_thread_cache     {"tc thread max"   LINE0 "Configured maximum bytes for tcmalloc thread caches"}
+}
+
+
+proc field_config {name} {
+    if {[dict exists $::fieldConfig $name]} {
+        lassign [dict get $::fieldConfig $name] label draw info
+        return [dict create label $label draw $draw info $info]
     }
 
-    array set fieldLabel {
-        vsize                       "vsize"
-        rss                         "rss"
-        uss                         "uss"
-        pss                         "pss"
-        swap                        "swap"
-
-        tcmalloc_current_allocated  "tc current"
-        tcmalloc_heap_size          "tc heap"
-        tcmalloc_total_physical     "tc physical"
-        tcmalloc_pageheap_free      "tc pagefree"
-        tcmalloc_pageheap_unmapped  "tc unmapped"
+    #
+    # Keep nsproxy values visible, since they are emitted dynamically with
+    # pool and process numbers in the field name.
+    #
+    if {[regexp {^nsproxy:.*:(rss|vsize|uss)$} $name]} {
+        return [dict create \
+            label $name \
+            draw  LINE1 \
+            info  "Memory usage of NaviServer proxy process"]
     }
 
-    if {[info exists fieldLabel($name)]} {
-        puts "$name.label $fieldLabel($name)"
-    } else {
-        puts "$name.label $name"
-    }
+    return ""
+}
 
+proc emit_field_config {name cfg} {
+    puts "$name.label [dict get $cfg label]"
     puts "$name.type GAUGE"
     puts "$name.min 0"
+    puts "$name.draw [dict get $cfg draw]"
 
-    if {[info exists fieldInfo($name)]} {
-        puts "$name.info $fieldInfo($name)"
-    }
-
-    #
-    # Keep the main RSS/size and tcmalloc correlation lines prominent.
-    # More detailed allocator fields may still be recorded, but are hidden
-    # from the main graph by default.
-    #
-    switch -- $name {
-        rss -
-        vsize -
-        tcmalloc_current_allocated -
-        tcmalloc_heap_size -
-        tcmalloc_total_physical {
-            puts "$name.draw LINE2"
-        }
-
-        tcmalloc_pageheap_free -
-        tcmalloc_pageheap_unmapped {
-            puts "$name.draw LINE1"
-        }
-
-        uss -
-        pss -
-        swap -
-        tcmalloc_slack -
-        tcmalloc_pageheap_committed -
-        tcmalloc_central_free -
-        tcmalloc_transfer_free -
-        tcmalloc_thread_free -
-        tcmalloc_total_thread_cache -
-        tcmalloc_max_thread_cache {
-            puts "$name.draw LINE0"
-        }
+    set info [dict get $cfg info]
+    if {$info ne ""} {
+        puts "$name.info $info"
     }
 }
 
@@ -120,7 +107,10 @@ proc emit_config {{content ""}} {
 
     if {$content eq ""} {
         foreach name {vsize rss uss} {
-            emit_field_config $name
+            set cfg [field_config $name]
+            if {$cfg ne ""} {
+                emit_field_config $name $cfg
+            }
         }
     } else {
         set seen [dict create]
@@ -129,8 +119,11 @@ proc emit_config {{content ""}} {
             set line [string trim $line]
             if {[regexp {^(.*)[.]value} $line . name]} {
                 if {![dict exists $seen $name]} {
-                    emit_field_config $name
-                    dict set seen $name 1
+                    set cfg [field_config $name]
+                    if {$cfg ne ""} {
+                        emit_field_config $name $cfg
+                        dict set seen $name 1
+                    }
                 }
             }
         }
