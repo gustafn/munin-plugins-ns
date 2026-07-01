@@ -34,6 +34,82 @@ foreach n [array names config] {
   }
 }
 
+proc emit_field_config {name} {
+    array set fieldInfo {
+        vsize                       "Virtual memory size"
+        rss                         "Resident memory size"
+        uss                         "Unshared memory size"
+        pss                         "Proportional set size"
+        swap                        "Swap usage"
+
+        tcmalloc_current_allocated  "Bytes currently allocated by the application according to tcmalloc"
+        tcmalloc_heap_size          "Total heap size obtained by tcmalloc from the operating system"
+        tcmalloc_total_physical     "Physical memory currently used by tcmalloc"
+        tcmalloc_pageheap_free      "Bytes in the tcmalloc page heap freelist"
+        tcmalloc_pageheap_unmapped  "Bytes in the tcmalloc page heap returned/unmapped to the operating system"
+    }
+
+    array set fieldLabel {
+        vsize                       "vsize"
+        rss                         "rss"
+        uss                         "uss"
+        pss                         "pss"
+        swap                        "swap"
+
+        tcmalloc_current_allocated  "tc current"
+        tcmalloc_heap_size          "tc heap"
+        tcmalloc_total_physical     "tc physical"
+        tcmalloc_pageheap_free      "tc pagefree"
+        tcmalloc_pageheap_unmapped  "tc unmapped"
+    }
+
+    if {[info exists fieldLabel($name)]} {
+        puts "$name.label $fieldLabel($name)"
+    } else {
+        puts "$name.label $name"
+    }
+
+    puts "$name.type GAUGE"
+    puts "$name.min 0"
+
+    if {[info exists fieldInfo($name)]} {
+        puts "$name.info $fieldInfo($name)"
+    }
+
+    #
+    # Keep the main RSS/size and tcmalloc correlation lines prominent.
+    # More detailed allocator fields may still be recorded, but are hidden
+    # from the main graph by default.
+    #
+    switch -- $name {
+        rss -
+        vsize -
+        tcmalloc_current_allocated -
+        tcmalloc_heap_size -
+        tcmalloc_total_physical {
+            puts "$name.draw LINE2"
+        }
+
+        tcmalloc_pageheap_free -
+        tcmalloc_pageheap_unmapped {
+            puts "$name.draw LINE1"
+        }
+
+        uss -
+        pss -
+        swap -
+        tcmalloc_slack -
+        tcmalloc_pageheap_committed -
+        tcmalloc_central_free -
+        tcmalloc_transfer_free -
+        tcmalloc_thread_free -
+        tcmalloc_total_thread_cache -
+        tcmalloc_max_thread_cache {
+            puts "$name.draw LINE0"
+        }
+    }
+}
+
 proc emit_config {{content ""}} {
     global serverName
 
@@ -41,23 +117,21 @@ proc emit_config {{content ""}} {
     puts "graph_category naviserver"
     puts "graph_info This graph shows the current memory usage for Naviserver instance $serverName"
     puts "graph_args --lower-limit 0 --base 1024"
-    puts "vsize.info Virtual memory size"
-    puts "rss.info Resident memory size"
-    puts "uss.info Unshared memory size"
 
     if {$content eq ""} {
         foreach name {vsize rss uss} {
-            puts "$name.label $name"
-            puts "$name.type GAUGE"
-            puts "$name.min 0"
+            emit_field_config $name
         }
     } else {
+        set seen [dict create]
+
         foreach line [split $content \n] {
             set line [string trim $line]
             if {[regexp {^(.*)[.]value} $line . name]} {
-                puts "$name.label $name"
-                puts "$name.type GAUGE"
-                puts "$name.min 0"
+                if {![dict exists $seen $name]} {
+                    emit_field_config $name
+                    dict set seen $name 1
+                }
             }
         }
     }

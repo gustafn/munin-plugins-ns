@@ -335,6 +335,36 @@ switch [ns_queryget t ""] {
     }
 
     #
+    # Tcmalloc statistics are optional.  They are available only when
+    # NaviServer was built with tcmalloc/gperftools support and when the
+    # corresponding Tcl interface is present.  Values returned by tcmalloc
+    # are already byte counts.
+    #
+    set tcmalloc_output ""
+    catch {
+      set tcmallocStats [ns_info meminfo]
+      foreach {property field} {
+        current_allocated_bytes              tcmalloc_current_allocated
+        heap_size                            tcmalloc_heap_size
+        total_physical_bytes                 tcmalloc_total_physical
+        slack_bytes                          tcmalloc_slack
+        pageheap_free_bytes                  tcmalloc_pageheap_free
+        pageheap_committed_bytes             tcmalloc_pageheap_committed
+        pageheap_unmapped_bytes              tcmalloc_pageheap_unmapped
+        central_cache_free_bytes             tcmalloc_central_free
+        transfer_cache_free_bytes            tcmalloc_transfer_free
+        thread_cache_free_bytes              tcmalloc_thread_free
+        current_total_thread_cache_bytes     tcmalloc_total_thread_cache
+        max_total_thread_cache_bytes         tcmalloc_max_thread_cache
+      } {
+        if {[dict exists $tcmallocStats $property]} {
+          lappend tcmalloc_output \
+              "${field}.value [dict get $tcmallocStats $property]"
+        }
+      }
+    }
+
+    #
     # The calculation of "swap" and "pss" is optional, since the the
     # python script "smem" is quite slow, especially when large
     # amounts of memory are used. On every site seen so far, the "pss"
@@ -377,6 +407,7 @@ switch [ns_queryget t ""] {
           "pss.value   [expr {$pss * 1024}]" \
           "swap.value  [expr {$swap * 1024}]"
     }
+    lappend output {*}$tcmalloc_output
     lappend output {*}$nsproxy_output
   }
 
